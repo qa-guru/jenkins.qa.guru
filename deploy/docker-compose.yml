@@ -1,0 +1,103 @@
+version: "3.4"
+
+networks:
+  my-network:
+    driver: bridge
+
+services:
+  jenkins:
+    container_name: jenkins
+    image: ${JENKINS_IMAGE:-jenkins/jenkins:jdk21}
+    privileged: true
+    user: root
+    ports:
+      - "8082:8080"
+      - "50000:50000"
+    networks:
+      - my-network
+    volumes:
+      - /var/jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/local/bin/docker:/usr/local/bin/docker
+    restart: unless-stopped
+
+  jdk21-jenkins-agent-1:
+    image: jdk21-jenkins-agent-ext
+    build:
+      context: ./jdk21-agent
+    user: root
+    command: >-
+      java -jar /usr/share/jenkins/agent.jar
+      -url http://jenkins:8080
+      ${JDK21_AGENT_1_SECRET}
+      jdk21-jenkins-agent-1
+    restart: unless-stopped
+    networks:
+      - my-network
+
+  jdk21-jenkins-agent-2:
+    image: jdk21-jenkins-agent-ext
+    build:
+      context: ./jdk21-agent
+    user: root
+    command: >-
+      java -jar /usr/share/jenkins/agent.jar
+      -url http://jenkins:8080
+      ${JDK21_AGENT_2_SECRET}
+      jdk21-jenkins-agent-2
+    restart: unless-stopped
+    networks:
+      - my-network
+
+  jdk21-jenkins-agent-3:
+    image: jdk21-jenkins-agent-ext
+    build:
+      context: ./jdk21-agent
+    user: root
+    command: >-
+      java -jar /usr/share/jenkins/agent.jar
+      -url http://jenkins:8080
+      ${JDK21_AGENT_3_SECRET}
+      jdk21-jenkins-agent-3
+    restart: unless-stopped
+    networks:
+      - my-network
+
+  python3-jenkins-agent-1:
+    image: python3-jenkins-agent-ext
+    build:
+      context: ./python3-agent
+    user: root
+    command: >-
+      -url http://jenkins:8080
+      ${PYTHON3_AGENT_1_SECRET}
+      python3-jenkins-agent-1
+    restart: unless-stopped
+    networks:
+      - my-network
+
+  python3-jenkins-agent-2:
+    image: python3-jenkins-agent-ext
+    build:
+      context: ./python3-agent
+    user: root
+    command: >-
+      -url http://jenkins:8080
+      ${PYTHON3_AGENT_2_SECRET}
+      python3-jenkins-agent-2
+    restart: unless-stopped
+    networks:
+      - my-network
+
+  python3-jenkins-agent-3:
+    image: python3-jenkins-agent-ext
+    build:
+      context: ./python3-agent
+    user: root
+    command: >-
+      -url http://jenkins:8080
+      ${PYTHON3_AGENT_3_SECRET}
+      python3-jenkins-agent-3
+    restart: unless-stopped
+    networks:
+      - my-network

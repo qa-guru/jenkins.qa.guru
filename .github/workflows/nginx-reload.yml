@@ -1,0 +1,34 @@
+name: nginx-reload
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref with nginx scripts"
+        required: false
+        default: main
+
+jobs:
+  nginx:
+    runs-on: ubuntu-latest
+    environment: jenkins-production
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.JENKINS_DEPLOY_HOST || secrets.SELENOID_DEPLOY_HOST }}
+          username: ${{ secrets.JENKINS_DEPLOY_USER || secrets.SELENOID_DEPLOY_USER }}
+          key: ${{ secrets.JENKINS_DEPLOY_KEY || secrets.SELENOID_DEPLOY_KEY }}
+          script: |
+            set -euxo pipefail
+            REPO="qa-guru/jenkins.autotests.cloud"
+            REF="${{ inputs.ref }}"
+            CONFIG="${{ vars.JENKINS_CONFIG_DIR }}"
+            CONFIG="${CONFIG:-/var/docker-compose-config}"
+            curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/nginx-jenkins.conf" -o /tmp/nginx-jenkins.conf
+            curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/sync-nginx.sh" -o /tmp/sync-jenkins-nginx.sh
+            chmod +x /tmp/sync-jenkins-nginx.sh
+            cp /tmp/sync-jenkins-nginx.sh "${CONFIG}/bin/sync-nginx.sh"
+            sudo NGINX_CONF_SRC=/tmp/nginx-jenkins.conf "${CONFIG}/bin/sync-nginx.sh"

@@ -1,0 +1,96 @@
+name: deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git ref with deploy scripts (branch or tag)'
+        required: false
+        default: main
+      jenkins_image:
+        description: 'Override JENKINS_IMAGE in agents.env (empty = no change)'
+        required: false
+        default: ''
+      sync_nginx:
+        description: 'Apply nginx-jenkins.conf on the server'
+        required: false
+        type: boolean
+        default: false
+  repository_dispatch:
+    types: [deploy-jenkins]
+
+concurrency:
+  group: jenkins-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: jenkins-production
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref || github.event.client_payload.ref || github.ref }}
+
+      - name: Resolve script ref and options
+        id: meta
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "ref=${{ inputs.ref }}" >> "$GITHUB_OUTPUT"
+            echo "jenkins_image=${{ inputs.jenkins_image }}" >> "$GITHUB_OUTPUT"
+            echo "sync_nginx=${{ inputs.sync_nginx }}" >> "$GITHUB_OUTPUT"
+          elif [[ -n "${{ github.event.client_payload.ref }}" ]]; then
+            echo "ref=${{ github.event.client_payload.ref }}" >> "$GITHUB_OUTPUT"
+            echo "jenkins_image=${{ github.event.client_payload.jenkins_image || '' }}" >> "$GITHUB_OUTPUT"
+            echo "sync_nginx=${{ github.event.client_payload.sync_nginx || 'false' }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=main" >> "$GITHUB_OUTPUT"
+            echo "jenkins_image=" >> "$GITHUB_OUTPUT"
+            echo "sync_nginx=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.JENKINS_DEPLOY_HOST || secrets.SELENOID_DEPLOY_HOST }}
+          username: ${{ secrets.JENKINS_DEPLOY_USER || secrets.SELENOID_DEPLOY_USER }}
+          key: ${{ secrets.JENKINS_DEPLOY_KEY || secrets.SELENOID_DEPLOY_KEY }}
+          script_stop: false
+          script: |
+            set -euo pipefail
+            export JENKINS_CONFIG_DIR="${{ vars.JENKINS_CONFIG_DIR }}"
+            export JENKINS_CONFIG_DIR="${JENKINS_CONFIG_DIR:-/var/docker-compose-config}"
+            STAGING="$HOME/.jenkins-deploy"
+            REPO="qa-guru/jenkins.autotests.cloud"
+            REF="${{ steps.meta.outputs.ref }}"
+            mkdir -p "$STAGING/jdk21-agent" "$STAGING/python3-agent"
+            curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/deploy.sh" -o "$STAGING/deploy.sh"
+            curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/docker-compose.yml" -o "$STAGING/docker-compose.yml"
+            curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/jdk21-agent/Dockerfile" -o "$STAGING/jdk21-agent/Dockerfile"
+            curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/python3-agent/Dockerfile" -o "$STAGING/python3-agent/Dockerfile"
+            curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/sync-nginx.sh" -o "$STAGING/sync-nginx.sh"
+            curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/nginx-jenkins.conf" -o "$STAGING/nginx-jenkins.conf"
+            chmod +x "$STAGING/deploy.sh" "$STAGING/sync-nginx.sh"
+            if [[ -n "${{ steps.meta.outputs.jenkins_image }}" ]]; then
+              if grep -q '^JENKINS_IMAGE=' "$JENKINS_CONFIG_DIR/agents.env"; then
+                sed -i "s|^JENKINS_IMAGE=.*|JENKINS_IMAGE=${{ steps.meta.outputs.jenkins_image }}|" "$JENKINS_CONFIG_DIR/agents.env"
+              else
+                echo "JENKINS_IMAGE=${{ steps.meta.outputs.jenkins_image }}" >> "$JENKINS_CONFIG_DIR/agents.env"
+              fi
+            fi
+            bash "$STAGING/deploy.sh"
+            if [[ "${{ steps.meta.outputs.sync_nginx }}" == "true" ]]; then
+              install -m 755 "$STAGING/sync-nginx.sh" "$JENKINS_CONFIG_DIR/bin/sync-nginx.sh"
+              sudo NGINX_CONF_SRC="$STAGING/nginx-jenkins.conf" "$JENKINS_CONFIG_DIR/bin/sync-nginx.sh"
+            fi
+
+      - name: Smoke test (public)
+        env:
+          JENKINS_PUBLIC_URL: ${{ vars.JENKINS_PUBLIC_URL }}
+        run: |
+          if [[ -z "${JENKINS_PUBLIC_URL:-}" ]]; then
+            echo "JENKINS_PUBLIC_URL is not set — skip public smoke test" >&2
+            exit 0
+          fi
+          chmod +x deploy/smoke-remote.sh
+          ./deploy/smoke-remote.sh "$JENKINS_PUBLIC_URL"
