@@ -10,6 +10,8 @@ services:
     image: ${JENKINS_IMAGE:-jenkins/jenkins:jdk21}
     privileged: true
     user: root
+    environment:
+      JAVA_OPTS: "-Xmx2g -Xms512m -XX:+UseG1GC"
     ports:
       - "8082:8080"
       - "50000:50000"
@@ -20,11 +22,23 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - /usr/local/bin/docker:/usr/local/bin/docker
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4G
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:8080/login || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
 
   jdk21-jenkins-agent-1:
     image: jdk21-jenkins-agent-ext
     build:
       context: ./jdk21-agent
+    init: true
     user: root
     command: >-
       java -jar /usr/share/jenkins/agent.jar
@@ -34,11 +48,17 @@ services:
     restart: unless-stopped
     networks:
       - my-network
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
 
   jdk21-jenkins-agent-2:
     image: jdk21-jenkins-agent-ext
     build:
       context: ./jdk21-agent
+    init: true
     user: root
     command: >-
       java -jar /usr/share/jenkins/agent.jar
@@ -48,11 +68,17 @@ services:
     restart: unless-stopped
     networks:
       - my-network
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
 
   jdk21-jenkins-agent-3:
     image: jdk21-jenkins-agent-ext
     build:
       context: ./jdk21-agent
+    init: true
     user: root
     command: >-
       java -jar /usr/share/jenkins/agent.jar
@@ -62,11 +88,17 @@ services:
     restart: unless-stopped
     networks:
       - my-network
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
 
   python3-jenkins-agent-1:
     image: python3-jenkins-agent-ext
     build:
       context: ./python3-agent
+    init: true
     user: root
     command: >-
       -url http://jenkins:8080
@@ -75,11 +107,17 @@ services:
     restart: unless-stopped
     networks:
       - my-network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 1G
 
   python3-jenkins-agent-2:
     image: python3-jenkins-agent-ext
     build:
       context: ./python3-agent
+    init: true
     user: root
     command: >-
       -url http://jenkins:8080
@@ -88,11 +126,17 @@ services:
     restart: unless-stopped
     networks:
       - my-network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 1G
 
   python3-jenkins-agent-3:
     image: python3-jenkins-agent-ext
     build:
       context: ./python3-agent
+    init: true
     user: root
     command: >-
       -url http://jenkins:8080
@@ -101,3 +145,8 @@ services:
     restart: unless-stopped
     networks:
       - my-network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 1G
