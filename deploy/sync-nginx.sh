@@ -29,7 +29,7 @@ if [[ -f "$SITE_PATH" ]]; then
   grep -E '^\s*ssl_certificate(_key)? ' "$SITE_PATH" | awk '!seen[$0]++' >>"$SSL_SNIPPET" || true
 fi
 if [[ ! -s "$SSL_SNIPPET" ]]; then
-  for domain in jenkins.autotests.cloud jenkins.autotests.cloud-0001; do
+  for domain in jenkins.qa.guru jenkins.qa.guru-0001; do
     if [[ -f "/etc/letsencrypt/live/${domain}/fullchain.pem" ]]; then
       {
         echo "    ssl_certificate /etc/letsencrypt/live/${domain}/fullchain.pem;"

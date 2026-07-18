@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: jenkins-production
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.ref || github.event.client_payload.ref || github.ref }}
 
@@ -50,7 +50,7 @@ jobs:
           fi
 
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.JENKINS_DEPLOY_HOST || secrets.SELENOID_DEPLOY_HOST }}
           username: ${{ secrets.JENKINS_DEPLOY_USER || secrets.SELENOID_DEPLOY_USER }}
@@ -61,7 +61,7 @@ jobs:
             export JENKINS_CONFIG_DIR="${{ vars.JENKINS_CONFIG_DIR }}"
             export JENKINS_CONFIG_DIR="${JENKINS_CONFIG_DIR:-/var/docker-compose-config}"
             STAGING="$HOME/.jenkins-deploy"
-            REPO="qa-guru/jenkins.autotests.cloud"
+            REPO="qa-guru/jenkins.qa.guru"
             REF="${{ steps.meta.outputs.ref }}"
             mkdir -p "$STAGING/jdk21-agent" "$STAGING/python3-agent"
             curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/deploy.sh" -o "$STAGING/deploy.sh"

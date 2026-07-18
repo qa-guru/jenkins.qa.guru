@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-time bootstrap for jenkins.autotests.cloud deploy via GitHub Actions (user selenoid).
+# One-time bootstrap for jenkins.qa.guru deploy via GitHub Actions (user selenoid).
 # Run on the server as root.
 set -euo pipefail
 

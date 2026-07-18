@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BASE_URL="${1:-${JENKINS_PUBLIC_URL:-https://jenkins.autotests.cloud}}"
+BASE_URL="${1:-${JENKINS_PUBLIC_URL:-https://jenkins.qa.guru}}"
 BASE_URL="${BASE_URL%/}"
 
 code="$(curl -s -o /dev/null -w '%{http_code}' "${BASE_URL}/login" || true)"

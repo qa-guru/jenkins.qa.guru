@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploy Jenkins stack to jenkins.autotests.cloud host.
+# Deploy Jenkins stack to jenkins.qa.guru host.
 # Run as deploy user (selenoid) — needs write access to JENKINS_CONFIG_DIR.
 set -euo pipefail
 

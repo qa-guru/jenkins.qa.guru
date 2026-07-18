@@ -1,4 +1,4 @@
-# Деплой jenkins.autotests.cloud
+# Деплой jenkins.qa.guru
 
 Jenkins controller + inbound agents через Docker Compose на prod-хосте.
 
@@ -30,7 +30,7 @@ Nginx: `/etc/nginx/sites-available/jenkins` → `127.0.0.1:8082`.
 На сервере **от root**:
 
 ```bash
-# из клона qa-guru/jenkins.autotests.cloud
+# из клона qa-guru/jenkins.qa.guru
 sudo DEPLOY_USER=selenoid ./deploy/bootstrap.sh
 ```
 
@@ -81,7 +81,7 @@ Workflow [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml):
 | Variable | Default | Описание |
 |----------|---------|----------|
 | `JENKINS_CONFIG_DIR` | `/var/docker-compose-config` | Каталог compose |
-| `JENKINS_PUBLIC_URL` | `https://jenkins.autotests.cloud` | Smoke test |
+| `JENKINS_PUBLIC_URL` | `https://jenkins.qa.guru` | Smoke test |
 
 Workflow inputs:
 
@@ -107,7 +107,7 @@ sudo NGINX_CONF_SRC=./deploy/nginx-jenkins.conf ./deploy/sync-nginx.sh
 ## Проверка
 
 ```bash
-./deploy/smoke-remote.sh https://jenkins.autotests.cloud
+./deploy/smoke-remote.sh https://jenkins.qa.guru
 curl -sf http://127.0.0.1:8082/login -o /dev/null && echo OK
 docker compose -f /var/docker-compose-config/docker-compose.yml ps
 ```

@@ -13,17 +13,17 @@ jobs:
     runs-on: ubuntu-latest
     environment: jenkins-production
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.ref }}
-      - uses: appleboy/ssh-action@v1.2.0
+      - uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.JENKINS_DEPLOY_HOST || secrets.SELENOID_DEPLOY_HOST }}
           username: ${{ secrets.JENKINS_DEPLOY_USER || secrets.SELENOID_DEPLOY_USER }}
           key: ${{ secrets.JENKINS_DEPLOY_KEY || secrets.SELENOID_DEPLOY_KEY }}
           script: |
             set -euxo pipefail
-            REPO="qa-guru/jenkins.autotests.cloud"
+            REPO="qa-guru/jenkins.qa.guru"
             REF="${{ inputs.ref }}"
             CONFIG="${{ vars.JENKINS_CONFIG_DIR }}"
             CONFIG="${CONFIG:-/var/docker-compose-config}"
