@@ -18,11 +18,11 @@ fi
 
 echo "=== config dir ${CONFIG_DIR} ==="
 install -d -o "${DEPLOY_USER}" -g docker -m 775 "${CONFIG_DIR}/bin"
-install -d -o "${DEPLOY_USER}" -g docker -m 775 "${CONFIG_DIR}/jdk21-agent" "${CONFIG_DIR}/python3-agent"
+install -d -o "${DEPLOY_USER}" -g docker -m 775 "${CONFIG_DIR}/java-jdk21-agent" "${CONFIG_DIR}/python-python314-agent"
 
 echo "=== ownership for deploy user ${DEPLOY_USER} ==="
 chown -R "${DEPLOY_USER}:docker" "${CONFIG_DIR}"
-chmod 775 "${CONFIG_DIR}" "${CONFIG_DIR}/bin" "${CONFIG_DIR}/jdk21-agent" "${CONFIG_DIR}/python3-agent" 2>/dev/null || true
+chmod 775 "${CONFIG_DIR}" "${CONFIG_DIR}/bin" "${CONFIG_DIR}/java-jdk21-agent" "${CONFIG_DIR}/python-python314-agent" 2>/dev/null || true
 
 if [[ ! -f "${CONFIG_DIR}/agents.env" ]]; then
   echo "WARN: create ${CONFIG_DIR}/agents.env from deploy/agents.env.example before first deploy" >&2

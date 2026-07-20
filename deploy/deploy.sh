@@ -15,10 +15,10 @@ if [[ ! -f "${ENV_FILE}" ]]; then
 fi
 
 echo "=== sync compose + agent Dockerfiles → ${CONFIG_DIR} ==="
-install -d "${CONFIG_DIR}/jdk21-agent" "${CONFIG_DIR}/python3-agent" "${CONFIG_DIR}/bin"
+install -d "${CONFIG_DIR}/java-jdk21-agent" "${CONFIG_DIR}/python-python314-agent" "${CONFIG_DIR}/bin"
 install -m 644 "${SCRIPT_DIR}/docker-compose.yml" "${CONFIG_DIR}/docker-compose.yml"
-install -m 644 "${SCRIPT_DIR}/jdk21-agent/Dockerfile" "${CONFIG_DIR}/jdk21-agent/Dockerfile"
-install -m 644 "${SCRIPT_DIR}/python3-agent/Dockerfile" "${CONFIG_DIR}/python3-agent/Dockerfile"
+install -m 644 "${SCRIPT_DIR}/java-jdk21-agent/Dockerfile" "${CONFIG_DIR}/java-jdk21-agent/Dockerfile"
+install -m 644 "${SCRIPT_DIR}/python-python314-agent/Dockerfile" "${CONFIG_DIR}/python-python314-agent/Dockerfile"
 install -m 755 "${SCRIPT_DIR}/sync-nginx.sh" "${CONFIG_DIR}/bin/sync-nginx.sh"
 
 echo "=== pull Jenkins controller image ==="

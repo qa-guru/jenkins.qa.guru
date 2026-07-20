@@ -34,17 +34,17 @@ services:
       retries: 3
       start_period: 120s
 
-  jdk21-jenkins-agent-1:
-    image: jdk21-jenkins-agent-ext
+  java-jdk21-jenkins-agent-1:
+    image: java-jdk21-jenkins-agent-ext
     build:
-      context: ./jdk21-agent
+      context: ./java-jdk21-agent
     init: true
     user: root
     command: >-
       java -jar /usr/share/jenkins/agent.jar
       -url http://jenkins:8080
-      ${JDK21_AGENT_1_SECRET}
-      jdk21-jenkins-agent-1
+      ${JAVA_JDK21_AGENT_1_SECRET}
+      java-jdk21-jenkins-agent-1
     restart: unless-stopped
     networks:
       - my-network
@@ -54,17 +54,17 @@ services:
           cpus: "1.0"
           memory: 2G
 
-  jdk21-jenkins-agent-2:
-    image: jdk21-jenkins-agent-ext
+  java-jdk21-jenkins-agent-2:
+    image: java-jdk21-jenkins-agent-ext
     build:
-      context: ./jdk21-agent
+      context: ./java-jdk21-agent
     init: true
     user: root
     command: >-
       java -jar /usr/share/jenkins/agent.jar
       -url http://jenkins:8080
-      ${JDK21_AGENT_2_SECRET}
-      jdk21-jenkins-agent-2
+      ${JAVA_JDK21_AGENT_2_SECRET}
+      java-jdk21-jenkins-agent-2
     restart: unless-stopped
     networks:
       - my-network
@@ -74,17 +74,17 @@ services:
           cpus: "1.0"
           memory: 2G
 
-  jdk21-jenkins-agent-3:
-    image: jdk21-jenkins-agent-ext
+  java-jdk21-jenkins-agent-3:
+    image: java-jdk21-jenkins-agent-ext
     build:
-      context: ./jdk21-agent
+      context: ./java-jdk21-agent
     init: true
     user: root
     command: >-
       java -jar /usr/share/jenkins/agent.jar
       -url http://jenkins:8080
-      ${JDK21_AGENT_3_SECRET}
-      jdk21-jenkins-agent-3
+      ${JAVA_JDK21_AGENT_3_SECRET}
+      java-jdk21-jenkins-agent-3
     restart: unless-stopped
     networks:
       - my-network
@@ -94,16 +94,56 @@ services:
           cpus: "1.0"
           memory: 2G
 
-  python3-jenkins-agent-1:
-    image: python3-jenkins-agent-ext
+  java-jdk21-jenkins-agent-4:
+    image: java-jdk21-jenkins-agent-ext
     build:
-      context: ./python3-agent
+      context: ./java-jdk21-agent
+    init: true
+    user: root
+    command: >-
+      java -jar /usr/share/jenkins/agent.jar
+      -url http://jenkins:8080
+      ${JAVA_JDK21_AGENT_4_SECRET}
+      java-jdk21-jenkins-agent-4
+    restart: unless-stopped
+    networks:
+      - my-network
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
+
+  java-jdk21-jenkins-agent-5:
+    image: java-jdk21-jenkins-agent-ext
+    build:
+      context: ./java-jdk21-agent
+    init: true
+    user: root
+    command: >-
+      java -jar /usr/share/jenkins/agent.jar
+      -url http://jenkins:8080
+      ${JAVA_JDK21_AGENT_5_SECRET}
+      java-jdk21-jenkins-agent-5
+    restart: unless-stopped
+    networks:
+      - my-network
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
+
+  python-python314-jenkins-agent-1:
+    image: python-python314-jenkins-agent-ext
+    build:
+      context: ./python-python314-agent
     init: true
     user: root
     command: >-
       -url http://jenkins:8080
-      ${PYTHON3_AGENT_1_SECRET}
-      python3-jenkins-agent-1
+      ${PYTHON_PYTHON314_AGENT_1_SECRET}
+      python-python314-jenkins-agent-1
     restart: unless-stopped
     networks:
       - my-network
@@ -113,16 +153,16 @@ services:
           cpus: "0.5"
           memory: 1G
 
-  python3-jenkins-agent-2:
-    image: python3-jenkins-agent-ext
+  python-python314-jenkins-agent-2:
+    image: python-python314-jenkins-agent-ext
     build:
-      context: ./python3-agent
+      context: ./python-python314-agent
     init: true
     user: root
     command: >-
       -url http://jenkins:8080
-      ${PYTHON3_AGENT_2_SECRET}
-      python3-jenkins-agent-2
+      ${PYTHON_PYTHON314_AGENT_2_SECRET}
+      python-python314-jenkins-agent-2
     restart: unless-stopped
     networks:
       - my-network
@@ -132,16 +172,54 @@ services:
           cpus: "0.5"
           memory: 1G
 
-  python3-jenkins-agent-3:
-    image: python3-jenkins-agent-ext
+  python-python314-jenkins-agent-3:
+    image: python-python314-jenkins-agent-ext
     build:
-      context: ./python3-agent
+      context: ./python-python314-agent
     init: true
     user: root
     command: >-
       -url http://jenkins:8080
-      ${PYTHON3_AGENT_3_SECRET}
-      python3-jenkins-agent-3
+      ${PYTHON_PYTHON314_AGENT_3_SECRET}
+      python-python314-jenkins-agent-3
+    restart: unless-stopped
+    networks:
+      - my-network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 1G
+
+  python-python314-jenkins-agent-4:
+    image: python-python314-jenkins-agent-ext
+    build:
+      context: ./python-python314-agent
+    init: true
+    user: root
+    command: >-
+      -url http://jenkins:8080
+      ${PYTHON_PYTHON314_AGENT_4_SECRET}
+      python-python314-jenkins-agent-4
+    restart: unless-stopped
+    networks:
+      - my-network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 1G
+
+  python-python314-jenkins-agent-5:
+    image: python-python314-jenkins-agent-ext
+    build:
+      context: ./python-python314-agent
+    init: true
+    user: root
+    command: >-
+      -url http://jenkins:8080
+      ${PYTHON_PYTHON314_AGENT_5_SECRET}
+      python-python314-jenkins-agent-5
     restart: unless-stopped
     networks:
       - my-network

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-time on server: extract agent secrets from legacy docker-compose.yml into agents.env.
+# One-time on server: extract agent secrets from docker-compose.yml into agents.env.
 set -euo pipefail
 
 CONFIG_DIR="${JENKINS_CONFIG_DIR:-/var/docker-compose-config}"
@@ -13,7 +13,7 @@ fi
 
 extract_secret() {
   local service="$1"
-  python3 - "$COMPOSE_FILE" "$service" <<'PY'
+  python - "$COMPOSE_FILE" "$service" <<'PY'
 import re, sys
 path, service = sys.argv[1], sys.argv[2]
 text = open(path, encoding="utf-8").read()
@@ -29,17 +29,21 @@ PY
 }
 
 umask 077
-cat >"${OUT}" <<EOF
+cat >"${OUT}" <<EOFENV
 JENKINS_IMAGE=jenkins/jenkins:jdk21
 
-JDK21_AGENT_1_SECRET=$(extract_secret jdk21-jenkins-agent-1)
-JDK21_AGENT_2_SECRET=$(extract_secret jdk21-jenkins-agent-2)
-JDK21_AGENT_3_SECRET=$(extract_secret jdk21-jenkins-agent-3)
+JAVA_JDK21_AGENT_1_SECRET=$(extract_secret java-jdk21-jenkins-agent-1)
+JAVA_JDK21_AGENT_2_SECRET=$(extract_secret java-jdk21-jenkins-agent-2)
+JAVA_JDK21_AGENT_3_SECRET=$(extract_secret java-jdk21-jenkins-agent-3)
+JAVA_JDK21_AGENT_4_SECRET=$(extract_secret java-jdk21-jenkins-agent-4)
+JAVA_JDK21_AGENT_5_SECRET=$(extract_secret java-jdk21-jenkins-agent-5)
 
-PYTHON3_AGENT_1_SECRET=$(extract_secret python3-jenkins-agent-1)
-PYTHON3_AGENT_2_SECRET=$(extract_secret python3-jenkins-agent-2)
-PYTHON3_AGENT_3_SECRET=$(extract_secret python3-jenkins-agent-3)
-EOF
+PYTHON_PYTHON314_AGENT_1_SECRET=$(extract_secret python-python314-jenkins-agent-1)
+PYTHON_PYTHON314_AGENT_2_SECRET=$(extract_secret python-python314-jenkins-agent-2)
+PYTHON_PYTHON314_AGENT_3_SECRET=$(extract_secret python-python314-jenkins-agent-3)
+PYTHON_PYTHON314_AGENT_4_SECRET=$(extract_secret python-python314-jenkins-agent-4)
+PYTHON_PYTHON314_AGENT_5_SECRET=$(extract_secret python-python314-jenkins-agent-5)
+EOFENV
 
 chown selenoid:docker "${OUT}" 2>/dev/null || true
 echo "Wrote ${OUT} (chmod 600 recommended)"

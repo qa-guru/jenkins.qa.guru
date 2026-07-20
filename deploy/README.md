@@ -8,8 +8,8 @@ Jenkins controller + inbound agents через Docker Compose на prod-хост
 /var/docker-compose-config/
   docker-compose.yml
   agents.env              ← секреты (не в git)
-  jdk21-agent/Dockerfile
-  python3-agent/Dockerfile
+  java-jdk21-agent/Dockerfile
+  python-python314-agent/Dockerfile
   bin/sync-nginx.sh
 
 /var/jenkins_home/         ← данные Jenkins (volume, сохраняется)
@@ -18,8 +18,8 @@ Jenkins controller + inbound agents через Docker Compose на prod-хост
 | Сервис | Образ | Порты |
 |--------|-------|-------|
 | jenkins | `jenkins/jenkins:jdk21` | 8082→8080, 50000 |
-| jdk21-jenkins-agent-{1,2,3} | `jdk21-jenkins-agent-ext` | internal |
-| python3-jenkins-agent-{1,2,3} | `python3-jenkins-agent-ext` | internal |
+| java-jdk21-jenkins-agent-{1..5} | `java-jdk21-jenkins-agent-ext` | internal |
+| python-python314-jenkins-agent-{1..5} | `python-python314-jenkins-agent-ext` | internal |
 
 Nginx: `/etc/nginx/sites-available/jenkins` → `127.0.0.1:8082`.
 
