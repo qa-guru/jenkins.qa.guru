@@ -55,7 +55,7 @@ jobs:
           host: ${{ secrets.JENKINS_DEPLOY_HOST || secrets.SELENOID_DEPLOY_HOST }}
           username: ${{ secrets.JENKINS_DEPLOY_USER || secrets.SELENOID_DEPLOY_USER }}
           key: ${{ secrets.JENKINS_DEPLOY_KEY || secrets.SELENOID_DEPLOY_KEY }}
-          script_stop: false
+          command_timeout: 30m
           script: |
             set -euo pipefail
             export JENKINS_CONFIG_DIR="${{ vars.JENKINS_CONFIG_DIR }}"
