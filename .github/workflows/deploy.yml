@@ -72,15 +72,15 @@ jobs:
             curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/nginx-jenkins.conf" -o "$STAGING/nginx-jenkins.conf"
             chmod +x "$STAGING/deploy.sh" "$STAGING/sync-nginx.sh"
             if [[ -n "${{ steps.meta.outputs.jenkins_image }}" ]]; then
-              if grep -q '^JENKINS_IMAGE=' "$JENKINS_CONFIG_DIR/agents.env"; then
-                sed -i "s|^JENKINS_IMAGE=.*|JENKINS_IMAGE=${{ steps.meta.outputs.jenkins_image }}|" "$JENKINS_CONFIG_DIR/agents.env"
+              if sudo grep -q '^JENKINS_IMAGE=' "$JENKINS_CONFIG_DIR/agents.env"; then
+                sudo sed -i "s|^JENKINS_IMAGE=.*|JENKINS_IMAGE=${{ steps.meta.outputs.jenkins_image }}|" "$JENKINS_CONFIG_DIR/agents.env"
               else
-                echo "JENKINS_IMAGE=${{ steps.meta.outputs.jenkins_image }}" >> "$JENKINS_CONFIG_DIR/agents.env"
+                echo "JENKINS_IMAGE=${{ steps.meta.outputs.jenkins_image }}" | sudo tee -a "$JENKINS_CONFIG_DIR/agents.env" >/dev/null
               fi
             fi
-            bash "$STAGING/deploy.sh"
+            sudo JENKINS_CONFIG_DIR="$JENKINS_CONFIG_DIR" bash "$STAGING/deploy.sh"
             if [[ "${{ steps.meta.outputs.sync_nginx }}" == "true" ]]; then
-              install -m 755 "$STAGING/sync-nginx.sh" "$JENKINS_CONFIG_DIR/bin/sync-nginx.sh"
+              sudo install -m 755 "$STAGING/sync-nginx.sh" "$JENKINS_CONFIG_DIR/bin/sync-nginx.sh"
               sudo NGINX_CONF_SRC="$STAGING/nginx-jenkins.conf" "$JENKINS_CONFIG_DIR/bin/sync-nginx.sh"
             fi
 
