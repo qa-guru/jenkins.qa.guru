@@ -27,14 +27,20 @@
   <triggers/>
   <concurrentBuild>false</concurrentBuild>
   <builders>
-    <hudson.tasks.Shell>
-      <command>chmod +x gradlew
-./gradlew clean test --no-daemon
-rm -rf allure-results
-cp -r build/allure-results allure-results
-echo "Allure results count: $(find allure-results -name '*-result.json' | wc -l)"</command>
-      <configuredLocalRules/>
-    </hudson.tasks.Shell>
+    <hudson.plugins.gradle.Gradle plugin="gradle@2.14.1">
+      <switches>--no-daemon</switches>
+      <tasks>clean test</tasks>
+      <rootBuildScriptDir></rootBuildScriptDir>
+      <buildFile></buildFile>
+      <gradleName>(Default)</gradleName>
+      <useWrapper>true</useWrapper>
+      <makeExecutable>true</makeExecutable>
+      <useWorkspaceAsHome>false</useWorkspaceAsHome>
+      <wrapperLocation></wrapperLocation>
+      <passAllAsSystemProperties>false</passAllAsSystemProperties>
+      <projectProperties></projectProperties>
+      <passAllAsProjectProperties>false</passAllAsProjectProperties>
+    </hudson.plugins.gradle.Gradle>
   </builders>
   <publishers>
     <ru.yandex.qatools.allure.jenkins.AllureReportPublisher plugin="allure-jenkins-plugin@2.35.2">
@@ -47,7 +53,7 @@ echo "Allure results count: $(find allure-results -name '*-result.json' | wc -l)
       <reportVersion>ALLURE2</reportVersion>
       <results>
         <ru.yandex.qatools.allure.jenkins.ResultsConfig>
-          <path>allure-results</path>
+          <path>build/allure-results</path>
         </ru.yandex.qatools.allure.jenkins.ResultsConfig>
       </results>
     </ru.yandex.qatools.allure.jenkins.AllureReportPublisher>
