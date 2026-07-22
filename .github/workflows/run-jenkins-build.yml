@@ -24,7 +24,7 @@ jobs:
             sudo test -f "${JOB_DIR}/config.xml"
             BEFORE=$(sudo cat "${JOB_DIR}/nextBuildNumber" 2>/dev/null || echo 1)
             echo "next build number: ${BEFORE}"
-            sudo docker exec jenkins bash -lc "wget -qO- --post-data='' http://127.0.0.1:8080/job/${JOB}/build?delay=0sec && echo queued" || true
+            sudo docker exec jenkins bash -lc "curl -sf -X POST http://127.0.0.1:8080/job/${JOB}/build?delay=0sec && echo queued" || true
             BUILD=$BEFORE
             for i in $(seq 1 90); do
               if sudo test -f "${JOB_DIR}/builds/${BUILD}/log" && sudo grep -q 'Finished:' "${JOB_DIR}/builds/${BUILD}/log"; then
