@@ -1,0 +1,46 @@
+name: run-jenkins-build
+
+on:
+  workflow_dispatch:
+    inputs:
+      job:
+        default: ui_tests_with_attachments
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    environment: jenkins-production
+    steps:
+      - uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.JENKINS_DEPLOY_HOST || secrets.SELENOID_DEPLOY_HOST }}
+          username: ${{ secrets.JENKINS_DEPLOY_USER || secrets.SELENOID_DEPLOY_USER }}
+          key: ${{ secrets.JENKINS_DEPLOY_KEY || secrets.SELENOID_DEPLOY_KEY }}
+          command_timeout: 20m
+          script: |
+            set -euo pipefail
+            JOB="${{ inputs.job }}"
+            ENV=/var/docker-compose-config/agents.env
+            JUSER=$(sudo grep -E '^JENKINS_(ADMIN_)?USER=' "$ENV" | head -1 | cut -d= -f2- || true)
+            JTOKEN=$(sudo grep -E '^JENKINS_(ADMIN_)?TOKEN=' "$ENV" | head -1 | cut -d= -f2- || true)
+            BEFORE=$(cat /var/jenkins_home/jobs/${JOB}/lastBuildNumber)
+            if [[ -n "$JUSER" && -n "$JTOKEN" ]]; then
+              CRUMB=$(curl -sf -u "$JUSER:$JTOKEN" 'http://127.0.0.1:8082/crumbIssuer/api/json' | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["crumbRequestField"]+":"+d["crumb"])')
+              curl -sf -X POST -u "$JUSER:$JTOKEN" -H "$CRUMB" "http://127.0.0.1:8082/job/${JOB}/build?delay=0sec"
+            else
+              docker exec jenkins bash -lc "wget -qO- --post-data='' http://127.0.0.1:8080/job/${JOB}/build?delay=0sec" || true
+            fi
+            echo "scheduled after lastBuildNumber=${BEFORE}"
+            BUILD=$BEFORE
+            for i in $(seq 1 90); do
+              CUR=$(cat /var/jenkins_home/jobs/${JOB}/lastBuildNumber)
+              if [[ "$CUR" -gt "$BEFORE" ]]; then BUILD=$((CUR - 1)); fi
+              if [[ -f "/var/jenkins_home/jobs/${JOB}/builds/${BUILD}/log" ]] && grep -q 'Finished:' "/var/jenkins_home/jobs/${JOB}/builds/${BUILD}/log"; then
+                break
+              fi
+              sleep 10
+            done
+            echo "=== build #${BUILD} tail ==="
+            tail -40 "/var/jenkins_home/jobs/${JOB}/builds/${BUILD}/log"
+            echo "=== allure summary ==="
+            cat "/var/jenkins_home/jobs/${JOB}/builds/${BUILD}/archive/allure-summary.json" 2>/dev/null || echo no summary
