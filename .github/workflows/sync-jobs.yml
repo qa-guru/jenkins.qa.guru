@@ -1,0 +1,69 @@
+name: sync-jobs
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git ref with deploy/jobs configs'
+        required: false
+        default: main
+      trigger_build:
+        description: 'Run Build Now for ui_tests_with_attachments after sync'
+        required: false
+        type: boolean
+        default: true
+
+concurrency:
+  group: jenkins-production
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    environment: jenkins-production
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - name: Sync freestyle jobs via SSH
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.JENKINS_DEPLOY_HOST || secrets.SELENOID_DEPLOY_HOST }}
+          username: ${{ secrets.JENKINS_DEPLOY_USER || secrets.SELENOID_DEPLOY_USER }}
+          key: ${{ secrets.JENKINS_DEPLOY_KEY || secrets.SELENOID_DEPLOY_KEY }}
+          command_timeout: 15m
+          script: |
+            set -euo pipefail
+            REF="${{ inputs.ref || github.ref_name }}"
+            STAGING="$HOME/.jenkins-deploy"
+            REPO="qa-guru/jenkins.qa.guru"
+            mkdir -p "$STAGING/jobs"
+            curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/sync-jobs.sh" -o "$STAGING/sync-jobs.sh"
+            curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/jobs/java_base/ui_tests_with_attachments/config.xml" \
+              -o "$STAGING/jobs/java_base/ui_tests_with_attachments/config.xml"
+            chmod +x "$STAGING/sync-jobs.sh"
+            JOB_CFG="/var/jenkins_home/jobs/java_base/jobs/ui_tests_with_attachments/config.xml"
+            if [[ -f "$JOB_CFG" ]]; then
+              echo "=== existing config (first 40 lines) ==="
+              sed -n '1,40p' "$JOB_CFG" || true
+            else
+              echo "No existing job config at $JOB_CFG"
+            fi
+            sudo JENKINS_HOME=/var/jenkins_home bash "$STAGING/sync-jobs.sh"
+            echo "=== applied config (publishers/builders) ==="
+            rg -n 'builders|publishers|Allure|gradlew|selenoid|attachments' "$JOB_CFG" || true
+
+      - name: Trigger build (optional)
+        if: inputs.trigger_build
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.JENKINS_DEPLOY_HOST || secrets.SELENOID_DEPLOY_HOST }}
+          username: ${{ secrets.JENKINS_DEPLOY_USER || secrets.SELENOID_DEPLOY_USER }}
+          key: ${{ secrets.JENKINS_DEPLOY_KEY || secrets.SELENOID_DEPLOY_KEY }}
+          command_timeout: 2m
+          script: |
+            set -euo pipefail
+            curl -sf -X POST "http://127.0.0.1:8082/job/java_base/job/ui_tests_with_attachments/build?delay=0sec" \
+              || curl -sf -X POST "http://127.0.0.1:8082/view/java_base/job/ui_tests_with_attachments/build?delay=0sec"
+            echo "Build queued"
