@@ -18,19 +18,23 @@ jobs:
           host: ${{ secrets.JENKINS_DEPLOY_HOST || secrets.SELENOID_DEPLOY_HOST }}
           username: ${{ secrets.JENKINS_DEPLOY_USER || secrets.SELENOID_DEPLOY_USER }}
           key: ${{ secrets.JENKINS_DEPLOY_KEY || secrets.SELENOID_DEPLOY_KEY }}
-          command_timeout: 15m
+          command_timeout: 10m
           script: |
             set -euo pipefail
             JOB="${{ inputs.job }}"
             BUILD="${{ inputs.build }}"
             if [[ "$BUILD" == "last" ]]; then
-              BUILD=$(cat "/var/jenkins_home/jobs/${JOB}/lastBuildNumber")
+              BUILD=$(sudo cat "/var/jenkins_home/jobs/${JOB}/lastBuildNumber")
               BUILD=$((BUILD - 1))
             fi
             echo "=== build ${BUILD} log tail ==="
-            tail -100 "/var/jenkins_home/jobs/${JOB}/builds/${BUILD}/log" || true
-            echo "=== config publishers ==="
-            grep -A20 'AllureReportPublisher\|gradlew' "/var/jenkins_home/jobs/${JOB}/config.xml" || true
-            echo "=== archive tree ==="
-            find "/var/jenkins_home/jobs/${JOB}/builds/${BUILD}/archive" -maxdepth 4 -type d 2>/dev/null | head -30 || true
-            find "/var/jenkins_home/jobs/${JOB}/builds/${BUILD}/archive" -name '*allure*' 2>/dev/null | head -20 || true
+            sudo tail -120 "/var/jenkins_home/jobs/${JOB}/builds/${BUILD}/log" || true
+            echo "=== archive ==="
+            sudo find "/var/jenkins_home/jobs/${JOB}/builds/${BUILD}/archive" -maxdepth 5 2>/dev/null | head -40 || true
+            echo "=== allure plugin dirs on build ==="
+            sudo find "/var/jenkins_home/jobs/${JOB}/builds/${BUILD}" -maxdepth 3 -type d 2>/dev/null | head -30 || true
+            echo "=== workspace ==="
+            sudo ls -la "/var/jenkins_home/workspace/${JOB}/build/allure-results" 2>&1 | head -15 || true
+            sudo ls -la "/var/jenkins_home/workspace/${JOB}@2/build/allure-results" 2>&1 | head -15 || true
+            echo "=== allure summary ==="
+            sudo cat "/var/jenkins_home/jobs/${JOB}/builds/${BUILD}/archive/allure-summary.json" 2>/dev/null || echo no summary
