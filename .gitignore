@@ -1,3 +1,4 @@
 .env
 *.log
 agents.env
+plugins/
