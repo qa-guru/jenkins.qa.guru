@@ -1,0 +1,53 @@
+name: apply-jenkins-job
+
+# Manual only: copy deploy/jobs/*/config.xml to jenkins_home on prod.
+# Does NOT run tests. Tests — only Jenkins Build Now.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git ref with deploy/jobs configs'
+        required: false
+        default: main
+      job:
+        description: 'Job path under deploy/jobs (empty = all)'
+        required: false
+        default: java_base/jobs/ui_tests_with_attachments
+
+concurrency:
+  group: jenkins-production
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    environment: jenkins-production
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - name: Install job config on prod
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.JENKINS_DEPLOY_HOST || secrets.SELENOID_DEPLOY_HOST }}
+          username: ${{ secrets.JENKINS_DEPLOY_USER || secrets.SELENOID_DEPLOY_USER }}
+          key: ${{ secrets.JENKINS_DEPLOY_KEY || secrets.SELENOID_DEPLOY_KEY }}
+          command_timeout: 10m
+          script: |
+            set -euo pipefail
+            REF="${{ inputs.ref || github.ref_name }}"
+            REPO="qa-guru/jenkins.qa.guru"
+            STAGING="$HOME/.jenkins-apply-job"
+            JOB="${{ inputs.job }}"
+            rm -rf "$STAGING"
+            mkdir -p "$STAGING/jobs/${JOB}"
+            curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/apply-jenkins-job.sh" \
+              -o "$STAGING/apply-jenkins-job.sh"
+            curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/jobs/${JOB}/config.xml" \
+              -o "$STAGING/jobs/${JOB}/config.xml"
+            chmod +x "$STAGING/apply-jenkins-job.sh"
+            sudo JENKINS_HOME=/var/jenkins_home bash "$STAGING/apply-jenkins-job.sh"
+            test -f "/var/jenkins_home/jobs/${JOB}/config.xml"
+            grep -En 'gradlew|Allure|java_base_jenkins_ui_tests' "/var/jenkins_home/jobs/${JOB}/config.xml"
