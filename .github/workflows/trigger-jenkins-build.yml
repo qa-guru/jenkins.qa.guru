@@ -23,8 +23,14 @@ jobs:
           script: |
             set -euo pipefail
             JOB="${{ inputs.job }}"
-            CRUMB=$(curl -sf 'http://127.0.0.1:8082/crumbIssuer/api/json' | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["crumbRequestField"]+":"+d["crumb"])')
-            curl -sf -X POST -H "$CRUMB" "http://127.0.0.1:8082/job/${JOB}/build?delay=0sec"
+            trigger_build() {
+              if CRUMB=$(curl -sf 'http://127.0.0.1:8082/crumbIssuer/api/json' 2>/dev/null | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["crumbRequestField"]+":"+d["crumb"])'); then
+                curl -sf -X POST -H "$CRUMB" "http://127.0.0.1:8082/job/${JOB}/build?delay=0sec"
+              else
+                sudo docker exec jenkins bash -lc "curl -sf -X POST http://127.0.0.1:8080/job/${JOB}/build?delay=0sec"
+              fi
+            }
+            trigger_build
             echo "queued ${JOB}"
             for i in $(seq 1 60); do
               sleep 10
