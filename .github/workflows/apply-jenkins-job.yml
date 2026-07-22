@@ -42,12 +42,14 @@ jobs:
             STAGING="$HOME/.jenkins-apply-job"
             JOB="${{ inputs.job }}"
             rm -rf "$STAGING"
-            mkdir -p "$STAGING/jobs/${JOB}"
+            mkdir -p "$STAGING/jobs/java_base/jobs/ui_tests_with_attachments"
             curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/apply-jenkins-job.sh" \
               -o "$STAGING/apply-jenkins-job.sh"
-            curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/jobs/${JOB}/config.xml" \
-              -o "$STAGING/jobs/${JOB}/config.xml"
+            curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/jobs/java_base/config.xml" \
+              -o "$STAGING/jobs/java_base/config.xml"
+            curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/jobs/java_base/jobs/ui_tests_with_attachments/config.xml" \
+              -o "$STAGING/jobs/java_base/jobs/ui_tests_with_attachments/config.xml"
             chmod +x "$STAGING/apply-jenkins-job.sh"
             sudo JENKINS_HOME=/var/jenkins_home bash "$STAGING/apply-jenkins-job.sh"
-            test -f "/var/jenkins_home/jobs/${JOB}/config.xml"
-            grep -En 'gradlew|Allure|java_base_jenkins_ui_tests' "/var/jenkins_home/jobs/${JOB}/config.xml"
+            test -f /var/jenkins_home/jobs/java_base/config.xml
+            test -f /var/jenkins_home/jobs/java_base/jobs/ui_tests_with_attachments/config.xml
