@@ -38,10 +38,10 @@ jobs:
             REF="${{ inputs.ref || github.ref_name }}"
             STAGING="$HOME/.jenkins-deploy"
             REPO="qa-guru/jenkins.qa.guru"
-            mkdir -p "$STAGING/jobs/java_base/ui_tests_with_attachments"
+            mkdir -p "$STAGING/jobs/java_base/jobs/ui_tests_with_attachments"
             curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/sync-jobs.sh" -o "$STAGING/sync-jobs.sh"
-            curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/jobs/java_base/ui_tests_with_attachments/config.xml" \
-              -o "$STAGING/jobs/java_base/ui_tests_with_attachments/config.xml"
+            curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/jobs/java_base/jobs/ui_tests_with_attachments/config.xml" \
+              -o "$STAGING/jobs/java_base/jobs/ui_tests_with_attachments/config.xml"
             chmod +x "$STAGING/sync-jobs.sh"
             JOB_CFG="/var/jenkins_home/jobs/java_base/jobs/ui_tests_with_attachments/config.xml"
             if [[ -f "$JOB_CFG" ]]; then
@@ -50,6 +50,7 @@ jobs:
             else
               echo "No existing job config at $JOB_CFG"
             fi
+            sudo rm -rf /var/jenkins_home/jobs/java_base/ui_tests_with_attachments
             sudo JENKINS_HOME=/var/jenkins_home bash "$STAGING/sync-jobs.sh"
             echo "=== applied config (publishers/builders) ==="
             grep -En 'builders|publishers|Allure|gradlew|attachments' "$JOB_CFG" || true
@@ -65,5 +66,5 @@ jobs:
           script: |
             set -euo pipefail
             curl -sf -X POST "http://127.0.0.1:8082/job/java_base/job/ui_tests_with_attachments/build?delay=0sec" \
-              || curl -sf -X POST "http://127.0.0.1:8082/view/java_base/job/ui_tests_with_attachments/build?delay=0sec"
-            echo "Build queued"
+              && echo "Build queued" \
+              || echo "WARN: could not queue build (trigger manually in UI)"

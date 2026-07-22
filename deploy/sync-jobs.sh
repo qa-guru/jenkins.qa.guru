@@ -27,12 +27,13 @@ for src in "${configs[@]}"; do
     cp "$dst" "${dst}.bak-$(date +%Y%m%d%H%M%S)"
   fi
   cp "$src" "$dst"
-  echo "synced ${job_path}"
+  test -f "$dst"
+  echo "synced ${job_path} -> ${dst}"
 done
 
-# Reload job definitions without full Jenkins restart.
+# Reload job definitions without full Jenkins restart (best-effort).
 if curl -sf -o /dev/null -X POST "http://127.0.0.1:8082/reload"; then
   echo "Jenkins config reloaded"
 else
-  echo "WARN: Jenkins reload failed (job configs are on disk; reload from UI if needed)" >&2
+  echo "WARN: Jenkins reload skipped (config.xml is on disk; UI reload optional)" >&2
 fi
