@@ -29,7 +29,10 @@
   <builders>
     <hudson.tasks.Shell>
       <command>chmod +x gradlew
-./gradlew clean test --no-daemon</command>
+./gradlew clean test --no-daemon
+rm -rf allure-results
+cp -r build/allure-results allure-results
+echo "Allure results count: $(find allure-results -name '*-result.json' | wc -l)"</command>
       <configuredLocalRules/>
     </hudson.tasks.Shell>
   </builders>
@@ -44,7 +47,7 @@
       <reportVersion>ALLURE2</reportVersion>
       <results>
         <ru.yandex.qatools.allure.jenkins.ResultsConfig>
-          <path>build/allure-results</path>
+          <path>allure-results</path>
         </ru.yandex.qatools.allure.jenkins.ResultsConfig>
       </results>
     </ru.yandex.qatools.allure.jenkins.AllureReportPublisher>
