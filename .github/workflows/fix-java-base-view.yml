@@ -17,42 +17,36 @@ jobs:
           command_timeout: 10m
           script: |
             set -euo pipefail
-            ENV_FILE=/var/docker-compose-config/agents.env
-            JUSER="$(sudo grep -E '^JENKINS_ADMIN_USER=' "$ENV_FILE" | cut -d= -f2- || true)"
-            JTOKEN="$(sudo grep -E '^JENKINS_ADMIN_TOKEN=' "$ENV_FILE" | cut -d= -f2- || true)"
-            if [[ -z "$JUSER" || -z "$JTOKEN" ]]; then
-              echo "Jenkins admin creds not in agents.env — listing view names via container"
-              docker exec jenkins bash -lc 'curl -sf http://127.0.0.1:8080/api/json?tree=views[name,url]' || true
-            fi
-            GROOVY='import jenkins.model.Jenkins
+            cat > /tmp/fix-java-base-view.groovy <<'GROOVY'
+            import jenkins.model.Jenkins
+            import hudson.model.ListView
             def j = Jenkins.instance
-            println "ALL VIEWS:"
+            println 'ALL VIEWS:'
             j.views.each { v -> println "  ${v.name} :: ${v.class.name}" }
-            def job = j.getItem("ui_tests_with_attachments")
-            println "JOB: ${job != null ? job.name : "MISSING"} url=${job?.url}"
-            def view = j.getView("java_base")
+            def job = j.getItem('ui_tests_with_attachments')
+            println "JOB ui_tests_with_attachments: ${job != null ? 'OK' : 'MISSING'}"
+            def view = j.getView('java_base')
             if (view == null) {
-              println "Creating ListView java_base"
-              def lv = new hudson.model.ListView("java_base")
-              lv.description = "Java Base course"
-              j.addView(lv)
-              view = lv
+              println 'Creating ListView java_base'
+              view = new ListView('java_base')
+              view.description = 'Java Base course'
+              j.addView(view)
             }
-            if (view instanceof hudson.model.ListView) {
+            if (view instanceof ListView) {
               def names = new ArrayList(view.jobNames)
-              println "jobNames before: ${names}"
-              for (def n in ["ui_tests_with_attachments","ui_tests_with_pageobject","full_ui_tests"]) {
+              ['ui_tests_with_attachments','ui_tests_with_pageobject','full_ui_tests','ui_tests_ya_pageobject'].each { n ->
                 if (j.getItem(n) != null && !names.contains(n)) names.add(n)
               }
               view.jobNames = names
-              println "jobNames after: ${view.jobNames}"
+              println "jobNames: ${view.jobNames}"
             } else {
-              println "java_base is ${view.class.name} not ListView"
+              println "java_base is ${view.class.name}"
             }
             j.save()
-            println "saved"'
-            if [[ -n "$JUSER" && -n "$JTOKEN" ]]; then
-              printf '%s' "$GROOVY" | docker exec -i jenkins java -jar /opt/jenkins-cli.jar -s http://127.0.0.1:8080/ -auth "$JUSER:$JTOKEN" groovy =
-            else
-              printf '%s' "$GROOVY" | docker exec -i jenkins bash -lc 'curl -sf -X POST -H "Jenkins-Crumb:$(curl -sf http://127.0.0.1:8080/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,\":\",//crumb))" --data-urlencode script@-' http://127.0.0.1:8080/scriptText' || true
-            fi
+            println 'saved'
+            GROOVY
+            docker cp /tmp/fix-java-base-view.groovy jenkins:/tmp/fix-java-base-view.groovy
+            docker exec jenkins bash -lc '
+              CRUMB=$(curl -sf http://127.0.0.1:8080/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,":",//crumb))
+              curl -sf -X POST -H "$CRUMB" --data-urlencode "script=$(cat /tmp/fix-java-base-view.groovy)" http://127.0.0.1:8080/scriptText
+            '
