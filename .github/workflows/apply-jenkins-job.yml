@@ -10,10 +10,6 @@ on:
         description: 'Git ref with deploy/jobs configs'
         required: false
         default: main
-      job:
-        description: 'Job path under deploy/jobs (empty = all)'
-        required: false
-        default: java_base/jobs/ui_tests_with_attachments
 
 concurrency:
   group: jenkins-production
@@ -34,22 +30,23 @@ jobs:
           host: ${{ secrets.JENKINS_DEPLOY_HOST || secrets.SELENOID_DEPLOY_HOST }}
           username: ${{ secrets.JENKINS_DEPLOY_USER || secrets.SELENOID_DEPLOY_USER }}
           key: ${{ secrets.JENKINS_DEPLOY_KEY || secrets.SELENOID_DEPLOY_KEY }}
-          command_timeout: 10m
+          command_timeout: 15m
           script: |
             set -euo pipefail
             REF="${{ inputs.ref || github.ref_name }}"
             REPO="qa-guru/jenkins.qa.guru"
             STAGING="$HOME/.jenkins-apply-job"
-            JOB="${{ inputs.job }}"
             rm -rf "$STAGING"
-            mkdir -p "$STAGING/jobs/java_base/jobs/ui_tests_with_attachments"
+            mkdir -p "$STAGING/jobs/ui_tests_with_attachments"
             curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/apply-jenkins-job.sh" \
               -o "$STAGING/apply-jenkins-job.sh"
-            curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/jobs/java_base/config.xml" \
-              -o "$STAGING/jobs/java_base/config.xml"
-            curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/jobs/java_base/jobs/ui_tests_with_attachments/config.xml" \
-              -o "$STAGING/jobs/java_base/jobs/ui_tests_with_attachments/config.xml"
+            curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/jobs/ui_tests_with_attachments/config.xml" \
+              -o "$STAGING/jobs/ui_tests_with_attachments/config.xml"
             chmod +x "$STAGING/apply-jenkins-job.sh"
-            sudo JENKINS_HOME=/var/jenkins_home bash "$STAGING/apply-jenkins-job.sh"
-            test -f /var/jenkins_home/jobs/java_base/config.xml
-            test -f /var/jenkins_home/jobs/java_base/jobs/ui_tests_with_attachments/config.xml
+            echo "=== jenkins_home/jobs (before) ==="
+            ls -la /var/jenkins_home/jobs/ | head -30 || true
+            sudo rm -rf /var/jenkins_home/jobs/java_base
+            sudo JENKINS_HOME=/var/jenkins_home JENKINS_CONFIG_DIR=/var/docker-compose-config bash "$STAGING/apply-jenkins-job.sh"
+            test -f /var/jenkins_home/jobs/ui_tests_with_attachments/config.xml
+            echo "=== jenkins_home/jobs (after) ==="
+            ls -la /var/jenkins_home/jobs/ui_tests_with_attachments/ || true
