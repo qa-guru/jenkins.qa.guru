@@ -38,6 +38,7 @@ jobs:
             REF="${{ inputs.ref || github.ref_name }}"
             STAGING="$HOME/.jenkins-deploy"
             REPO="qa-guru/jenkins.qa.guru"
+            rm -rf "$STAGING"
             mkdir -p "$STAGING/jobs/java_base/jobs/ui_tests_with_attachments"
             curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/sync-jobs.sh" -o "$STAGING/sync-jobs.sh"
             curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/deploy/jobs/java_base/jobs/ui_tests_with_attachments/config.xml" \
