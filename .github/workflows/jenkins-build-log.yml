@@ -1,0 +1,32 @@
+name: jenkins-build-log
+
+on:
+  workflow_dispatch:
+    inputs:
+      job:
+        default: ui_tests_with_attachments
+      build:
+        default: "2"
+
+jobs:
+  log:
+    runs-on: ubuntu-latest
+    environment: jenkins-production
+    steps:
+      - uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.JENKINS_DEPLOY_HOST || secrets.SELENOID_DEPLOY_HOST }}
+          username: ${{ secrets.JENKINS_DEPLOY_USER || secrets.SELENOID_DEPLOY_USER }}
+          key: ${{ secrets.JENKINS_DEPLOY_KEY || secrets.SELENOID_DEPLOY_KEY }}
+          command_timeout: 10m
+          script: |
+            JOB="${{ inputs.job }}"
+            BUILD="${{ inputs.build }}"
+            echo "=== consoleText tail ==="
+            curl -sf "http://127.0.0.1:8082/job/${JOB}/${BUILD}/consoleText" | tail -80
+            echo "=== workspace allure-results ==="
+            ls -la "/var/jenkins_home/jobs/${JOB}/builds/${BUILD}/archive/build/allure-results" 2>&1 | head -20 || true
+            ls -la "/var/jenkins_home/workspace/${JOB}/build/allure-results" 2>&1 | head -20 || true
+            echo "=== allure plugin data ==="
+            ls -la "/var/jenkins_home/jobs/${JOB}/builds/${BUILD}/allure-report" 2>&1 | head -10 || true
+            ls -la "/var/jenkins_home/jobs/${JOB}/builds/${BUILD}/allure-results" 2>&1 | head -10 || true
