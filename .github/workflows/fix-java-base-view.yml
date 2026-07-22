@@ -1,0 +1,62 @@
+name: fix-java-base-view
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    environment: jenkins-production
+    steps:
+      - name: Add ui_tests_with_attachments to java_base view
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.JENKINS_DEPLOY_HOST || secrets.SELENOID_DEPLOY_HOST }}
+          username: ${{ secrets.JENKINS_DEPLOY_USER || secrets.SELENOID_DEPLOY_USER }}
+          key: ${{ secrets.JENKINS_DEPLOY_KEY || secrets.SELENOID_DEPLOY_KEY }}
+          command_timeout: 10m
+          script: |
+            set -euo pipefail
+            python3 - <<'PY'
+            import re
+            from pathlib import Path
+            cfg = Path('/var/jenkins_home/config.xml')
+            text = cfg.read_text(encoding='utf-8')
+            print('config size', len(text))
+            for m in re.finditer(r'<name>java_base</name>', text):
+                start = max(0, m.start() - 200)
+                print('--- context ---')
+                print(text[start:m.start()+400])
+            PY
+            echo "=== search view files ==="
+            grep -rl 'java_base' /var/jenkins_home 2>/dev/null | head -20 || true
+            echo "=== fix view via Jenkins CLI groovy ==="
+            docker exec jenkins bash -c 'java -jar /var/jenkins_home/war/WEB-INF/jenkins-cli.jar -s http://127.0.0.1:8080/ -auth "${JENKINS_ADMIN_USER}:${JENKINS_ADMIN_TOKEN}" groovy =' <<'GROOVY' 2>/dev/null || true
+            import jenkins.model.Jenkins
+            def j = Jenkins.instance
+            def view = j.getView('java_base')
+            if (view == null) {
+              println 'VIEW java_base NOT FOUND. All views:'
+              j.views.each { println "  - ${it.name} (${it.class.name})" }
+            } else {
+              println "VIEW found: ${view.name} class=${view.class.name}"
+              if (view.hasProperty('jobNames')) {
+                def names = view.jobNames
+                println "jobNames before: ${names}"
+                if (!names.contains('ui_tests_with_attachments')) {
+                  names.add('ui_tests_with_attachments')
+                  view.jobNames = names
+                  j.save()
+                  println 'ADDED ui_tests_with_attachments to view'
+                } else {
+                  println 'already in view'
+                }
+                println "jobNames after: ${view.jobNames}"
+              } else if (view.hasProperty('jobFilters')) {
+                println "uses filters: ${view.jobFilters*.class*.name}"
+              }
+            }
+            def job = j.getItem('ui_tests_with_attachments')
+            println "job item: ${job != null ? job.name : 'MISSING'}"
+            GROOVY
+            echo "=== done ==="
