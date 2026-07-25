@@ -11,8 +11,6 @@ RUN apt-get update \
         curl \
         ca-certificates \
         proxychains4 \
-        zip \
-        unzip \
     && curl -fsSL "https://nodejs.org/dist/v${NODE_VER}/node-v${NODE_VER}-linux-x64.tar.gz" \
         | tar -xz -C /opt \
     && mv "/opt/node-v${NODE_VER}-linux-x64" /opt/node \

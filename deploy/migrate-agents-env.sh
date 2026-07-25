@@ -43,6 +43,13 @@ PYTHON_PYTHON314_AGENT_2_SECRET=$(extract_secret python-python314-jenkins-agent-
 PYTHON_PYTHON314_AGENT_3_SECRET=$(extract_secret python-python314-jenkins-agent-3)
 PYTHON_PYTHON314_AGENT_4_SECRET=$(extract_secret python-python314-jenkins-agent-4)
 PYTHON_PYTHON314_AGENT_5_SECRET=$(extract_secret python-python314-jenkins-agent-5)
+
+# New pool — fill after creating nodes in Jenkins UI (Manage Nodes → secret)
+JS_NODE24_AGENT_1_SECRET=replace-me
+JS_NODE24_AGENT_2_SECRET=replace-me
+JS_NODE24_AGENT_3_SECRET=replace-me
+JS_NODE24_AGENT_4_SECRET=replace-me
+JS_NODE24_AGENT_5_SECRET=replace-me
 EOFENV
 
 chown selenoid:docker "${OUT}" 2>/dev/null || true

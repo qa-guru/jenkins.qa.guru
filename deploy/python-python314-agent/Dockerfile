@@ -2,9 +2,24 @@ FROM jenkins/jnlp-agent-python3
 
 USER root
 
-RUN apk add --no-cache msttcorefonts-installer fontconfig git bash openjdk21 \
+ARG ALLURE_CLI_VER=3.13.0
+
+RUN apk add --no-cache \
+        msttcorefonts-installer \
+        fontconfig \
+        git \
+        bash \
+        openjdk21 \
+        wget \
+        curl \
+        ca-certificates \
+        proxychains-ng \
+        nodejs \
+        npm \
     && update-ms-fonts \
-    && rm -rf /var/cache/apk/*
+    && npm install -g "allure@${ALLURE_CLI_VER}" \
+    && allure --version \
+    && rm -rf /var/cache/apk/* /root/.npm
 
 ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk
 ENV PATH="$JAVA_HOME/bin:$PATH"

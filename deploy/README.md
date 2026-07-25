@@ -10,6 +10,7 @@ Jenkins controller + inbound agents через Docker Compose на prod-хост
   agents.env              ← секреты (не в git)
   java-jdk21-agent/Dockerfile
   python-python314-agent/Dockerfile
+  js-node24-agent/Dockerfile
   bin/sync-nginx.sh
 
 /var/jenkins_home/         ← данные Jenkins (volume, сохраняется)
@@ -20,6 +21,7 @@ Jenkins controller + inbound agents через Docker Compose на prod-хост
 | jenkins | `jenkins/jenkins:jdk21` | 8082→8080, 50000 |
 | java-jdk21-jenkins-agent-{1..5} | `java-jdk21-jenkins-agent-ext` | internal |
 | python-python314-jenkins-agent-{1..5} | `python-python314-jenkins-agent-ext` | internal |
+| js-node24-jenkins-agent-{1..5} | `js-node24-jenkins-agent-ext` | internal |
 
 Nginx: `/etc/nginx/sites-available/jenkins` → `127.0.0.1:8082`.
 

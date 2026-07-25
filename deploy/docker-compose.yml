@@ -228,3 +228,103 @@ services:
         limits:
           cpus: "0.5"
           memory: 1G
+
+  js-node24-jenkins-agent-1:
+    image: js-node24-jenkins-agent-ext
+    build:
+      context: ./js-node24-agent
+    init: true
+    user: root
+    command: >-
+      java -jar /usr/share/jenkins/agent.jar
+      -url http://jenkins:8080
+      ${JS_NODE24_AGENT_1_SECRET}
+      js-node24-jenkins-agent-1
+    restart: unless-stopped
+    networks:
+      - my-network
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
+
+  js-node24-jenkins-agent-2:
+    image: js-node24-jenkins-agent-ext
+    build:
+      context: ./js-node24-agent
+    init: true
+    user: root
+    command: >-
+      java -jar /usr/share/jenkins/agent.jar
+      -url http://jenkins:8080
+      ${JS_NODE24_AGENT_2_SECRET}
+      js-node24-jenkins-agent-2
+    restart: unless-stopped
+    networks:
+      - my-network
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
+
+  js-node24-jenkins-agent-3:
+    image: js-node24-jenkins-agent-ext
+    build:
+      context: ./js-node24-agent
+    init: true
+    user: root
+    command: >-
+      java -jar /usr/share/jenkins/agent.jar
+      -url http://jenkins:8080
+      ${JS_NODE24_AGENT_3_SECRET}
+      js-node24-jenkins-agent-3
+    restart: unless-stopped
+    networks:
+      - my-network
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
+
+  js-node24-jenkins-agent-4:
+    image: js-node24-jenkins-agent-ext
+    build:
+      context: ./js-node24-agent
+    init: true
+    user: root
+    command: >-
+      java -jar /usr/share/jenkins/agent.jar
+      -url http://jenkins:8080
+      ${JS_NODE24_AGENT_4_SECRET}
+      js-node24-jenkins-agent-4
+    restart: unless-stopped
+    networks:
+      - my-network
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
+
+  js-node24-jenkins-agent-5:
+    image: js-node24-jenkins-agent-ext
+    build:
+      context: ./js-node24-agent
+    init: true
+    user: root
+    command: >-
+      java -jar /usr/share/jenkins/agent.jar
+      -url http://jenkins:8080
+      ${JS_NODE24_AGENT_5_SECRET}
+      js-node24-jenkins-agent-5
+    restart: unless-stopped
+    networks:
+      - my-network
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
