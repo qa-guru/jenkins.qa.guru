@@ -20,6 +20,9 @@ install -m 644 "${SCRIPT_DIR}/docker-compose.yml" "${CONFIG_DIR}/docker-compose.
 install -m 644 "${SCRIPT_DIR}/java-jdk21-agent/Dockerfile" "${CONFIG_DIR}/java-jdk21-agent/Dockerfile"
 install -m 644 "${SCRIPT_DIR}/python-python314-agent/Dockerfile" "${CONFIG_DIR}/python-python314-agent/Dockerfile"
 install -m 644 "${SCRIPT_DIR}/js-node24-agent/Dockerfile" "${CONFIG_DIR}/js-node24-agent/Dockerfile"
+install -d "${CONFIG_DIR}/qa-guru"
+install -m 755 "${SCRIPT_DIR}/qa-guru/send-allure-telegram.sh" "${CONFIG_DIR}/qa-guru/send-allure-telegram.sh"
+install -m 644 "${SCRIPT_DIR}/qa-guru/allure-notifications.version" "${CONFIG_DIR}/qa-guru/allure-notifications.version"
 install -m 755 "${SCRIPT_DIR}/sync-nginx.sh" "${CONFIG_DIR}/bin/sync-nginx.sh"
 
 echo "=== pull Jenkins controller image ==="

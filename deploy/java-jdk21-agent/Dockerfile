@@ -24,3 +24,8 @@ RUN apt-get update \
     && node --version \
     && allure --version \
     && rm -rf /var/lib/apt/lists/* /root/.npm
+
+# Shared Telegram notify (SSOT: deploy/qa-guru/; pin docs/allure-notifications/VERSION)
+COPY qa-guru/send-allure-telegram.sh /opt/qa-guru/bin/send-allure-telegram.sh
+COPY qa-guru/allure-notifications.version /opt/qa-guru/etc/allure-notifications.version
+RUN chmod 755 /opt/qa-guru/bin/send-allure-telegram.sh

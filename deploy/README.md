@@ -11,6 +11,8 @@ Jenkins controller + inbound agents через Docker Compose на prod-хост
   java-jdk21-agent/Dockerfile
   python-python314-agent/Dockerfile
   js-node24-agent/Dockerfile
+  qa-guru/send-allure-telegram.sh   ← baked into agents → /opt/qa-guru/bin/
+  qa-guru/allure-notifications.version  ← pin (= docs/allure-notifications/VERSION)
   bin/sync-nginx.sh
 
 /var/jenkins_home/         ← данные Jenkins (volume, сохраняется)

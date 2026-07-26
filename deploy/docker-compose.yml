@@ -37,7 +37,8 @@ services:
   java-jdk21-jenkins-agent-1:
     image: java-jdk21-jenkins-agent-ext
     build:
-      context: ./java-jdk21-agent
+      context: .
+      dockerfile: java-jdk21-agent/Dockerfile
     init: true
     user: root
     command: >-
@@ -57,7 +58,8 @@ services:
   java-jdk21-jenkins-agent-2:
     image: java-jdk21-jenkins-agent-ext
     build:
-      context: ./java-jdk21-agent
+      context: .
+      dockerfile: java-jdk21-agent/Dockerfile
     init: true
     user: root
     command: >-
@@ -77,7 +79,8 @@ services:
   java-jdk21-jenkins-agent-3:
     image: java-jdk21-jenkins-agent-ext
     build:
-      context: ./java-jdk21-agent
+      context: .
+      dockerfile: java-jdk21-agent/Dockerfile
     init: true
     user: root
     command: >-
@@ -97,7 +100,8 @@ services:
   java-jdk21-jenkins-agent-4:
     image: java-jdk21-jenkins-agent-ext
     build:
-      context: ./java-jdk21-agent
+      context: .
+      dockerfile: java-jdk21-agent/Dockerfile
     init: true
     user: root
     command: >-
@@ -117,7 +121,8 @@ services:
   java-jdk21-jenkins-agent-5:
     image: java-jdk21-jenkins-agent-ext
     build:
-      context: ./java-jdk21-agent
+      context: .
+      dockerfile: java-jdk21-agent/Dockerfile
     init: true
     user: root
     command: >-
@@ -137,7 +142,8 @@ services:
   python-python314-jenkins-agent-1:
     image: python-python314-jenkins-agent-ext
     build:
-      context: ./python-python314-agent
+      context: .
+      dockerfile: python-python314-agent/Dockerfile
     init: true
     user: root
     command: >-
@@ -156,7 +162,8 @@ services:
   python-python314-jenkins-agent-2:
     image: python-python314-jenkins-agent-ext
     build:
-      context: ./python-python314-agent
+      context: .
+      dockerfile: python-python314-agent/Dockerfile
     init: true
     user: root
     command: >-
@@ -175,7 +182,8 @@ services:
   python-python314-jenkins-agent-3:
     image: python-python314-jenkins-agent-ext
     build:
-      context: ./python-python314-agent
+      context: .
+      dockerfile: python-python314-agent/Dockerfile
     init: true
     user: root
     command: >-
@@ -194,7 +202,8 @@ services:
   python-python314-jenkins-agent-4:
     image: python-python314-jenkins-agent-ext
     build:
-      context: ./python-python314-agent
+      context: .
+      dockerfile: python-python314-agent/Dockerfile
     init: true
     user: root
     command: >-
@@ -213,7 +222,8 @@ services:
   python-python314-jenkins-agent-5:
     image: python-python314-jenkins-agent-ext
     build:
-      context: ./python-python314-agent
+      context: .
+      dockerfile: python-python314-agent/Dockerfile
     init: true
     user: root
     command: >-
@@ -232,7 +242,8 @@ services:
   js-node24-jenkins-agent-1:
     image: js-node24-jenkins-agent-ext
     build:
-      context: ./js-node24-agent
+      context: .
+      dockerfile: js-node24-agent/Dockerfile
     init: true
     user: root
     command: >-
@@ -252,7 +263,8 @@ services:
   js-node24-jenkins-agent-2:
     image: js-node24-jenkins-agent-ext
     build:
-      context: ./js-node24-agent
+      context: .
+      dockerfile: js-node24-agent/Dockerfile
     init: true
     user: root
     command: >-
@@ -272,7 +284,8 @@ services:
   js-node24-jenkins-agent-3:
     image: js-node24-jenkins-agent-ext
     build:
-      context: ./js-node24-agent
+      context: .
+      dockerfile: js-node24-agent/Dockerfile
     init: true
     user: root
     command: >-
@@ -292,7 +305,8 @@ services:
   js-node24-jenkins-agent-4:
     image: js-node24-jenkins-agent-ext
     build:
-      context: ./js-node24-agent
+      context: .
+      dockerfile: js-node24-agent/Dockerfile
     init: true
     user: root
     command: >-
@@ -312,7 +326,8 @@ services:
   js-node24-jenkins-agent-5:
     image: js-node24-jenkins-agent-ext
     build:
-      context: ./js-node24-agent
+      context: .
+      dockerfile: js-node24-agent/Dockerfile
     init: true
     user: root
     command: >-

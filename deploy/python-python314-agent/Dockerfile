@@ -28,3 +28,8 @@ RUN export POETRY_HOME=/opt/poetry \
     && python3 -m venv "$POETRY_HOME" \
     && "$POETRY_HOME/bin/pip" install "poetry==2.0.0" \
     && ln -sf /opt/poetry/bin/poetry /usr/sbin/poetry
+
+# Shared Telegram notify (SSOT: deploy/qa-guru/; pin docs/allure-notifications/VERSION)
+COPY qa-guru/send-allure-telegram.sh /opt/qa-guru/bin/send-allure-telegram.sh
+COPY qa-guru/allure-notifications.version /opt/qa-guru/etc/allure-notifications.version
+RUN chmod 755 /opt/qa-guru/bin/send-allure-telegram.sh
