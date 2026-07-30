@@ -23,7 +23,12 @@ RUN apt-get update \
     && allure --version \
     && rm -rf /var/lib/apt/lists/* /root/.npm
 
-# Shared Telegram notify (SSOT: deploy/qa-guru/; pin docs/allure-notifications/VERSION)
+# Shared Allure notifications contour (SSOT: deploy/qa-guru/ ← dev/scripts + dev/notifications)
+# Pins: docs/allure-notifications/VERSION (CLI 6.x A3) · JAR-A2-VERSION (jar 4.x A2)
 COPY qa-guru/send-allure-telegram.sh /opt/qa-guru/bin/send-allure-telegram.sh
+COPY qa-guru/render-allure-notifications-config.sh /opt/qa-guru/bin/render-allure-notifications-config.sh
+COPY qa-guru/allure3.json.tmpl /opt/qa-guru/etc/allure-notifications/allure3.json.tmpl
+COPY qa-guru/allure2.json.tmpl /opt/qa-guru/etc/allure-notifications/allure2.json.tmpl
 COPY qa-guru/allure-notifications.version /opt/qa-guru/etc/allure-notifications.version
-RUN chmod 755 /opt/qa-guru/bin/send-allure-telegram.sh
+COPY qa-guru/allure-notifications-jar-a2.version /opt/qa-guru/etc/allure-notifications-jar-a2.version
+RUN chmod 755 /opt/qa-guru/bin/send-allure-telegram.sh /opt/qa-guru/bin/render-allure-notifications-config.sh

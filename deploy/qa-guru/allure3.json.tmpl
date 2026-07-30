@@ -1,0 +1,94 @@
+{
+  "base": {
+    "project": "${PROJECT}",
+    "environment": "${ENVIRONMENT}",
+    "comment": "${COMMENT}",
+    "language": "${LANGUAGE}",
+    "allureFolder": "${ALLURE_FOLDER}",
+    "allureResultsFolder": "${ALLURE_RESULTS_FOLDER}",
+    "enableChart": true,
+    "chart": {
+      "mode": "collage",
+      "layout": "free",
+      "width": 1080,
+      "height": 1080,
+      "headerHeight": 68,
+      "cardGap": 14,
+      "tilePad": 6,
+      "gridCols": 10,
+      "gridRows": 10,
+      "items": [
+        {
+          "type": "pie",
+          "x": 0,
+          "y": 0,
+          "w": 3,
+          "h": 3
+        },
+        {
+          "type": "statusDynamics",
+          "x": 3,
+          "y": 0,
+          "w": 5,
+          "h": 3
+        },
+        {
+          "type": "testResultSeverities",
+          "x": 8,
+          "y": 0,
+          "w": 2,
+          "h": 3
+        },
+        {
+          "type": "testingPyramid",
+          "x": 0,
+          "y": 3,
+          "w": 3,
+          "h": 3
+        },
+        {
+          "type": "durations",
+          "x": 3,
+          "y": 3,
+          "w": 4,
+          "h": 3,
+          "groupBy": "layer"
+        },
+        {
+          "type": "successRateDistribution",
+          "x": 7,
+          "y": 3,
+          "w": 3,
+          "h": 3
+        },
+        {
+          "type": "durations",
+          "x": 0,
+          "y": 6,
+          "w": 10,
+          "h": 4
+        }
+      ],
+      "pyramidFallback": "suites"
+    },
+    "links": {
+      "report": "${REPORT_URL}",
+      "build": "${BUILD_URL}",
+      "testops": "${TESTOPS_URL}"
+    },
+    "darkMode": true,
+    "enableSuitesPublishing": false
+  },
+  "telegram": {
+    "token": "${TELEGRAM_BOT_TOKEN}",
+    "chat": "${TELEGRAM_CHAT_ID}",
+    "topic": "${TELEGRAM_TOPIC_ID}",
+    "replyTo": "",
+    "templatePath": "/templates/telegram.ftl"
+  },
+  "proxy": {
+    "type": "socks5",
+    "host": "proxy.qaguru.school",
+    "port": 7777
+  }
+}

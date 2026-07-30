@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-# Install tracked freestyle job config.xml into jenkins_home (run on prod host).
+# DEPRECATED (ADR 010) — installs deploy/jobs/*/config.xml from the prod host.
+# Job SSOT is jenkins-qa-guru-home/dev/jobs/; deploy from the workstation instead:
+#   ./dev/scripts/apply-jenkins-ssot.sh jobs [<job> ...]
+# deploy/jobs/ is a byte-identical copy of dev/jobs/ui_tests_with_attachments — do not edit here.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

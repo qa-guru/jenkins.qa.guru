@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
-# Shared Jenkins post-build: allure-notifications CLI → Telegram (ADR 008).
-# SSOT version: docs/allure-notifications/VERSION → /opt/qa-guru/etc/allure-notifications.version
-# Override: ALLURE_NOTIFICATIONS_VERSION=6.0.1|latest
+# Shared Jenkins post-build → Telegram (ADR 008, URL contract ADR 010).
+# allure2: jar pin from docs/allure-notifications/JAR-A2-VERSION (4.x A2 pie + text) via proxychains4.
+# allure3: CLI pin from docs/allure-notifications/VERSION (6.x A3 collage) via proxychains4.
+#
+# The config is rendered by the build step render-allure-notifications-config.sh —
+# this script never patches it (no report-link / allureFolder sed).
 #
 # Usage (from job workspace):
 #   /opt/qa-guru/bin/send-allure-telegram.sh allure2
@@ -11,6 +14,14 @@ set -euo pipefail
 REPORT="${1:-}"
 CONFIG="${2:-notifications/config.json}"
 VERSION_FILE="${ALLURE_NOTIFICATIONS_VERSION_FILE:-/opt/qa-guru/etc/allure-notifications.version}"
+JAR_VERSION_FILE="${ALLURE_NOTIFICATIONS_JAR_VERSION_FILE:-/opt/qa-guru/etc/allure-notifications-jar-a2.version}"
+if [[ -n "${ALLURE_NOTIFICATIONS_JAR_VERSION:-}" ]]; then
+  JAR_VERSION="$ALLURE_NOTIFICATIONS_JAR_VERSION"
+elif [[ -f "$JAR_VERSION_FILE" ]]; then
+  JAR_VERSION="$(tr -d '[:space:]' <"$JAR_VERSION_FILE")"
+else
+  JAR_VERSION=4.11.0
+fi
 
 if [[ "$REPORT" != "allure2" && "$REPORT" != "allure3" ]]; then
   echo "usage: $0 allure2|allure3 [config.json]" >&2
@@ -19,39 +30,29 @@ fi
 
 cd "${WORKSPACE:-.}"
 
+if [[ ! -f "$CONFIG" ]]; then
+  echo "Missing ${CONFIG} — add the render-allure-notifications-config.sh build step" >&2
+  exit 1
+fi
+
+# Report folder is owned by the rendered config; here it is read-only input.
+ALLURE_FOLDER="$(sed -n 's/.*"allureFolder"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$CONFIG" | head -1)"
+if [[ -z "$ALLURE_FOLDER" ]]; then
+  echo "No allureFolder in ${CONFIG}" >&2
+  exit 1
+fi
+# CLI paths are relative to the config dir (notifications/), jar paths to the workspace.
+REPORT_PATH="${ALLURE_FOLDER#../}"
+REPORT_PATH="${REPORT_PATH%/}"
 if [[ "$REPORT" == "allure3" ]]; then
-  ALLURE_FOLDER=../allure3/
-  if [[ -f allure3/awesome/summary.json ]]; then
-    ALLURE_FOLDER=../allure3/awesome/
-  elif [[ ! -f allure3/summary.json && ! -f allure3/widgets/summary.json ]]; then
-    echo "No Allure summary — skip Telegram notification"
-    exit 0
-  fi
-  sed -i 's|"allureFolder": "[^"]*"|"allureFolder": "'"${ALLURE_FOLDER}"'"|' "$CONFIG"
-elif [[ ! -f allure2/widgets/summary.json ]]; then
-  echo "No Allure summary — skip Telegram notification"
-  exit 0
-fi
-
-if [[ -n "${ALLURE_NOTIFICATIONS_VERSION:-}" ]]; then
-  VERSION="$ALLURE_NOTIFICATIONS_VERSION"
-elif [[ -f "$VERSION_FILE" ]]; then
-  VERSION="$(tr -d '[:space:]' <"$VERSION_FILE")"
+  SUMMARY="${REPORT_PATH}/summary.json"
 else
-  VERSION=latest
-fi
-if [[ -z "$VERSION" ]]; then
-  VERSION=latest
+  SUMMARY="${REPORT_PATH}/widgets/summary.json"
 fi
 
-if ! command -v node >/dev/null 2>&1; then
-  echo "Node ≥ 20 required for allure-notifications CLI (node missing)"
-  exit 1
-fi
-NODE_MAJOR="$(node -v | sed 's/^v//' | cut -d. -f1)"
-if [[ "$NODE_MAJOR" -lt 20 ]]; then
-  echo "Node ≥ 20 required for allure-notifications CLI (got: $(node -v))"
-  exit 1
+if [[ ! -f "$SUMMARY" ]]; then
+  echo "No Allure summary at ${SUMMARY} — skip Telegram notification"
+  exit 0
 fi
 
 if ! command -v proxychains4 >/dev/null 2>&1; then
@@ -78,7 +79,47 @@ tcp_connect_time_out 8000
 socks5 ${PROXY_IP} 7777
 EOF
 
-echo "allure-notifications@${VERSION} (report=${REPORT}, config=${CONFIG})"
+# --- allure2: jar (4.x) ---
+# Jar must not use config.proxy — SOCKS in jar breaks photo upload; egress via proxychains4.
+if [[ "$REPORT" == "allure2" ]]; then
+  JAR="allure-notifications-${JAR_VERSION}.jar"
+  if [[ ! -f "$JAR" ]]; then
+    if ! curl -fsSL -o "$JAR" \
+      "https://github.com/qa-guru/allure-notifications/releases/download/${JAR_VERSION}/${JAR}"; then
+      curl -fsSL -o "$JAR" \
+        "https://github.com/qa-guru/allure-notifications/releases/download/v${JAR_VERSION}/${JAR}"
+    fi
+  fi
+  echo "allure-notifications jar ${JAR_VERSION} (report=${REPORT}, folder=${ALLURE_FOLDER}, config=${CONFIG})"
+  proxychains4 -q -f "$PROXYCHAINS_CONFIG" \
+    java -DconfigFile="${CONFIG}" -jar "$JAR"
+  echo "Telegram proxy send OK"
+  exit 0
+fi
+
+# --- allure3: CLI collage (6.x) ---
+if [[ -n "${ALLURE_NOTIFICATIONS_VERSION:-}" ]]; then
+  VERSION="$ALLURE_NOTIFICATIONS_VERSION"
+elif [[ -f "$VERSION_FILE" ]]; then
+  VERSION="$(tr -d '[:space:]' <"$VERSION_FILE")"
+else
+  VERSION=latest
+fi
+if [[ -z "$VERSION" ]]; then
+  VERSION=latest
+fi
+
+if ! command -v node >/dev/null 2>&1; then
+  echo "Node ≥ 20 required for allure-notifications CLI (node missing)"
+  exit 1
+fi
+NODE_MAJOR="$(node -v | sed 's/^v//' | cut -d. -f1)"
+if [[ "$NODE_MAJOR" -lt 20 ]]; then
+  echo "Node ≥ 20 required for allure-notifications CLI (got: $(node -v))"
+  exit 1
+fi
+
+echo "allure-notifications@${VERSION} (report=${REPORT}, folder=${ALLURE_FOLDER}, config=${CONFIG})"
 proxychains4 -q -f "$PROXYCHAINS_CONFIG" \
   npx --yes "allure-notifications@${VERSION}" send --config "$CONFIG" --live
 echo "Telegram proxy send OK"

@@ -13,3 +13,8 @@ if [[ "$code" != "200" && "$code" != "403" ]]; then
 fi
 
 echo "OK: Jenkins is reachable"
+
+SMOKE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -x "${SMOKE_DIR}/smoke-allure-jenkins-urls.sh" ]]; then
+  "${SMOKE_DIR}/smoke-allure-jenkins-urls.sh" "$BASE_URL"
+fi

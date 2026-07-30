@@ -106,12 +106,30 @@ Workflow inputs:
 sudo NGINX_CONF_SRC=./deploy/nginx-jenkins.conf ./deploy/sync-nginx.sh
 ```
 
+Единственный Allure-specific блок — redirect `…/allure3/(awesome|dashboard)/` → `index.html`:
+навигация **внутри** отчёта (корневая страница Allure 3 линкует подкаталоги), плагин на них
+отвечает 500. Публикуемые ссылки идут сразу на `index.html` и этого правила не касаются — ADR 010.
+
+---
+
+## Allure notifications на агентах
+
+`qa-guru/` — SSOT-копия из `jenkins-qa-guru-home/dev/` (обновляется `apply-jenkins-ssot.sh bake`),
+запекается в образы агентов в `/opt/qa-guru/`:
+
+| Файл | Назначение |
+|------|------------|
+| `send-allure-telegram.sh` | post-build отправка (jar 4.x для A2, CLI 6.x для A3) |
+| `render-allure-notifications-config.sh` | build step: шаблон → `notifications/config.json` + URL contract |
+| `allure3.json.tmpl` · `allure2.json.tmpl` | общий конфиг allure-notifications на все стеки |
+| `allure-notifications.version` · `allure-notifications-jar-a2.version` | version pins |
+
 ---
 
 ## Проверка
 
 ```bash
-./deploy/smoke-remote.sh https://jenkins.qa.guru
+./deploy/smoke-remote.sh https://jenkins.qa.guru   # + smoke-allure-jenkins-urls.sh (URL contract, ADR 010)
 curl -sf http://127.0.0.1:8082/login -o /dev/null && echo OK
 docker compose -f /var/docker-compose-config/docker-compose.yml ps
 ```

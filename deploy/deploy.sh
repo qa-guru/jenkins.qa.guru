@@ -22,7 +22,11 @@ install -m 644 "${SCRIPT_DIR}/python-python314-agent/Dockerfile" "${CONFIG_DIR}/
 install -m 644 "${SCRIPT_DIR}/js-node24-agent/Dockerfile" "${CONFIG_DIR}/js-node24-agent/Dockerfile"
 install -d "${CONFIG_DIR}/qa-guru"
 install -m 755 "${SCRIPT_DIR}/qa-guru/send-allure-telegram.sh" "${CONFIG_DIR}/qa-guru/send-allure-telegram.sh"
+install -m 755 "${SCRIPT_DIR}/qa-guru/render-allure-notifications-config.sh" "${CONFIG_DIR}/qa-guru/render-allure-notifications-config.sh"
+install -m 644 "${SCRIPT_DIR}/qa-guru/allure3.json.tmpl" "${CONFIG_DIR}/qa-guru/allure3.json.tmpl"
+install -m 644 "${SCRIPT_DIR}/qa-guru/allure2.json.tmpl" "${CONFIG_DIR}/qa-guru/allure2.json.tmpl"
 install -m 644 "${SCRIPT_DIR}/qa-guru/allure-notifications.version" "${CONFIG_DIR}/qa-guru/allure-notifications.version"
+install -m 644 "${SCRIPT_DIR}/qa-guru/allure-notifications-jar-a2.version" "${CONFIG_DIR}/qa-guru/allure-notifications-jar-a2.version"
 install -m 755 "${SCRIPT_DIR}/sync-nginx.sh" "${CONFIG_DIR}/bin/sync-nginx.sh"
 
 echo "=== pull Jenkins controller image ==="
