@@ -15,7 +15,7 @@ BASE_URL="${BASE_URL%/}"
 ALLURE3_JOBS=(
   reference-app-tests-freestyle-java-allure3
   reference-app-tests-freestyle-java-allure3-full-attachments
-  reference-app-tests-freestyle-java
+  reference-app-tests-freestyle-java-allure2-allure3
   reference-app-tests-freestyle-js-allure3
   reference-app-tests-freestyle-python-allure3
 )
@@ -25,7 +25,7 @@ ALLURE2_JOBS=(
   reference-app-tests-freestyle-java-allure2:allure2:lastSuccessfulBuild:trend
   reference-app-tests-freestyle-js-allure2:allure2:lastSuccessfulBuild:trend
   reference-app-tests-freestyle-python-allure2:allure2:lastSuccessfulBuild:trend
-  reference-app-tests-freestyle-java:allure2:lastSuccessfulBuild:trend
+  reference-app-tests-freestyle-java-allure2-allure3:allure2:lastSuccessfulBuild:trend
   # Student job: suite is red and the last green build predates report archiving —
   # only the link contract of the latest build is asserted.
   41_MashaSelyanko_proect1:allure-report:lastCompletedBuild:no-trend
