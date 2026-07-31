@@ -3,10 +3,13 @@
 # allure2: jar pin from docs/allure-notifications/JAR-A2-VERSION (4.x A2 pie + text) via proxychains4.
 # allure3: CLI pin from docs/allure-notifications/VERSION (6.x A3 collage) via proxychains4.
 #
-# The config is rendered by the build step render-allure-notifications-config.sh —
+# The config comes from the Create/Update Text File build step (notifications/config.json) —
 # this script never patches it (no report-link / allureFolder sed).
 #
-# Usage (from job workspace):
+# Agent helper / bake. Most freestyle jobs inline java -jar (A2) / npx send (A3) for students.
+# Exception (demo contrast): reference-app-tests-freestyle-java-allure2-allure3-sh still calls this.
+#
+# Usage (from workspace, optional):
 #   /opt/qa-guru/bin/send-allure-telegram.sh allure2
 #   /opt/qa-guru/bin/send-allure-telegram.sh allure3 [notifications/config.json]
 set -euo pipefail
@@ -31,7 +34,7 @@ fi
 cd "${WORKSPACE:-.}"
 
 if [[ ! -f "$CONFIG" ]]; then
-  echo "Missing ${CONFIG} — add the render-allure-notifications-config.sh build step" >&2
+  echo "Missing ${CONFIG} — add Create/Update Text File → notifications/config.json build step" >&2
   exit 1
 fi
 
