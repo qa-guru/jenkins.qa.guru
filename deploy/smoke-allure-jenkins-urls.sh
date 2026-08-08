@@ -2,9 +2,10 @@
 # Allure report URL contract on jenkins.qa.guru (ADR 010).
 #
 # Contract: every published link ends with index.html.
-#   allure3 → <build>/allure3/awesome/index.html + <build>/allure3/dashboard/index.html
-#   allure2 → <build>/<report>/index.html
-# Checked on the job trend URL and on a build permalink.
+#   single A3 → <build>/allure/awesome|dashboard/index.html
+#   dual A3   → <build>/allure3/awesome|dashboard/index.html
+#   single A2 → <build>/allure/index.html
+#   dual A2   → <build>/allure2/index.html
 # Directory URLs (…/awesome/) must 301 to index.html — nginx defense-in-depth for
 # in-report navigation; allure-jenkins-plugin itself answers 500 there.
 set -euo pipefail
@@ -12,23 +13,24 @@ set -euo pipefail
 BASE_URL="${1:-${JENKINS_PUBLIC_URL:-https://jenkins.qa.guru}}"
 BASE_URL="${BASE_URL%/}"
 
+# job:url-slug  — slug is Jenkins action URL (/allure classic, /allure3 dual-only)
 ALLURE3_JOBS=(
-  reference-app-tests-freestyle-java-allure3
-  reference-app-tests-freestyle-java-allure3-full-attachments
-  reference-app-tests-freestyle-java-allure2-allure3
-  reference-app-tests-freestyle-js-allure3
-  reference-app-tests-freestyle-python-allure3
+  reference-app-tests-freestyle-java-allure3:allure
+  reference-app-tests-freestyle-java-allure3-full-attachments:allure
+  reference-app-tests-freestyle-js-allure3:allure
+  reference-app-tests-freestyle-python-allure3:allure
+  reference-app-tests-freestyle-java-allure2-allure3:allure3
 )
 
-# job:report-dir:permalink[:trend]  — trend=no skips the job-level URL.
+# job:report-url-slug:permalink[:trend]  — trend=no skips the job-level URL.
 ALLURE2_JOBS=(
-  reference-app-tests-freestyle-java-allure2:allure2:lastSuccessfulBuild:trend
-  reference-app-tests-freestyle-js-allure2:allure2:lastSuccessfulBuild:trend
-  reference-app-tests-freestyle-python-allure2:allure2:lastSuccessfulBuild:trend
+  reference-app-tests-freestyle-java-allure2:allure:lastSuccessfulBuild:trend
+  reference-app-tests-freestyle-js-allure2:allure:lastSuccessfulBuild:trend
+  reference-app-tests-freestyle-python-allure2:allure:lastSuccessfulBuild:trend
   reference-app-tests-freestyle-java-allure2-allure3:allure2:lastSuccessfulBuild:trend
   # Student job: suite is red and the last green build predates report archiving —
   # only the link contract of the latest build is asserted.
-  41_MashaSelyanko_proect1:allure-report:lastCompletedBuild:no-trend
+  41_MashaSelyanko_proect1:allure:lastCompletedBuild:no-trend
 )
 
 fail=0
@@ -61,13 +63,14 @@ check_redirect() {
   fi
 }
 
-for job in "${ALLURE3_JOBS[@]}"; do
+for entry in "${ALLURE3_JOBS[@]}"; do
+  IFS=: read -r job slug <<<"$entry"
   for view in awesome dashboard; do
-    check_url "${job} trend ${view}" "${BASE_URL}/job/${job}/allure3/${view}/index.html"
+    check_url "${job} trend ${view}" "${BASE_URL}/job/${job}/${slug}/${view}/index.html"
     check_url "${job} lastSuccessfulBuild ${view}" \
-      "${BASE_URL}/job/${job}/lastSuccessfulBuild/allure3/${view}/index.html"
+      "${BASE_URL}/job/${job}/lastSuccessfulBuild/${slug}/${view}/index.html"
   done
-  check_redirect "${job} awesome/ dir" "${BASE_URL}/job/${job}/allure3/awesome/"
+  check_redirect "${job} awesome/ dir" "${BASE_URL}/job/${job}/${slug}/awesome/"
 done
 
 for entry in "${ALLURE2_JOBS[@]}"; do
