@@ -67,20 +67,16 @@ if ! command -v proxychains4 >/dev/null 2>&1; then
   fi
 fi
 
-PROXY_IP="$(getent ahostsv4 proxy.qaguru.school | awk 'NR == 1 { print $1; exit }')"
-if [[ -z "$PROXY_IP" ]]; then
-  echo "Cannot resolve proxy.qaguru.school"
-  exit 1
-fi
 PROXYCHAINS_CONFIG=/tmp/proxychains-telegram.conf
-cat >"$PROXYCHAINS_CONFIG" <<EOF
-strict_chain
-proxy_dns
-tcp_read_time_out 15000
-tcp_connect_time_out 8000
-[ProxyList]
-socks5 ${PROXY_IP} 7777
-EOF
+PREPARE="${PREPARE_TELEGRAM_SOCKS_PROXY:-/opt/qa-guru/bin/prepare-telegram-socks-proxy.sh}"
+if [[ ! -x "$PREPARE" ]]; then
+  PREPARE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/prepare-telegram-socks-proxy.sh"
+fi
+if [[ "$REPORT" == "allure3" ]]; then
+  "$PREPARE" "$CONFIG" "$PROXYCHAINS_CONFIG"
+else
+  "$PREPARE" "" "$PROXYCHAINS_CONFIG"
+fi
 
 # --- allure2: jar (4.x) ---
 # Jar must not use config.proxy — SOCKS in jar breaks photo upload; egress via proxychains4.

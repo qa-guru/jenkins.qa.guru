@@ -109,6 +109,16 @@ V_TOKEN="$(json_escape "${TELEGRAM_BOT_TOKEN:-}")"
 V_CHAT="$(json_escape "${TELEGRAM_CHAT_ID:-}")"
 V_TOPIC="$(json_escape "${TELEGRAM_TOPIC_ID:-}")"
 
+MICROSOCKS_ENV="${MICROSOCKS_ENV_FILE:-/opt/qa-guru/etc/microsocks.env}"
+if [[ -f "$MICROSOCKS_ENV" ]]; then
+  set -a
+  # shellcheck source=/dev/null
+  source "$MICROSOCKS_ENV"
+  set +a
+fi
+V_MICROSOCKS_USER="$(json_escape "${MICROSOCKS_USER:-}")"
+V_MICROSOCKS_PASS="$(json_escape "${MICROSOCKS_PASS:-}")"
+
 substitute() {
   local line="$1"
   line="${line//\$\{PROJECT\}/$V_PROJECT}"
@@ -123,6 +133,8 @@ substitute() {
   line="${line//\$\{TELEGRAM_BOT_TOKEN\}/$V_TOKEN}"
   line="${line//\$\{TELEGRAM_CHAT_ID\}/$V_CHAT}"
   line="${line//\$\{TELEGRAM_TOPIC_ID\}/$V_TOPIC}"
+  line="${line//\$\{MICROSOCKS_USER\}/$V_MICROSOCKS_USER}"
+  line="${line//\$\{MICROSOCKS_PASS\}/$V_MICROSOCKS_PASS}"
   printf '%s\n' "$line"
 }
 
