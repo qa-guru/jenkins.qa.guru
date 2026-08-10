@@ -20,12 +20,14 @@ Jenkins controller + inbound agents через Docker Compose на prod-хост
 
 | Сервис | Образ | Порты |
 |--------|-------|-------|
-| jenkins | `jenkins/jenkins:jdk21` | 8082→8080, 50000 |
+| jenkins | `jenkins/jenkins:jdk21` | **`127.0.0.1:8082`→8080**, **`127.0.0.1:50000`** (не `0.0.0.0`) |
 | java-jdk21-jenkins-agent-{1..5} | `java-jdk21-jenkins-agent-ext` | internal |
 | python-python314-jenkins-agent-{1..5} | `python-python314-jenkins-agent-ext` | internal |
 | js-node24-jenkins-agent-{1..5} | `js-node24-jenkins-agent-ext` | internal |
 
 Nginx: `/etc/nginx/sites-available/jenkins` → `127.0.0.1:8082`.
+
+**Security canon (2026-08-10):** `disableSignup=true`; matrix `Hudson.Administer` только у `admin` (не `authenticated`); публичный HTTP только через nginx. Re-apply: `../dev/scripts/harden-jenkins-security.sh`.
 
 ---
 

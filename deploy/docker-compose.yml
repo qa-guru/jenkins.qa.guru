@@ -13,8 +13,9 @@ services:
     environment:
       JAVA_OPTS: "-Xmx2g -Xms512m -XX:+UseG1GC"
     ports:
-      - "8082:8080"
-      - "50000:50000"
+      # localhost only — public edge is nginx → 127.0.0.1:8082 (never publish 0.0.0.0)
+      - "127.0.0.1:8082:8080"
+      - "127.0.0.1:50000:50000"
     networks:
       - my-network
     volumes:
