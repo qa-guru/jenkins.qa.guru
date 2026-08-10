@@ -27,7 +27,7 @@ Jenkins controller + inbound agents через Docker Compose на prod-хост
 
 Nginx: `/etc/nginx/sites-available/jenkins` → `127.0.0.1:8082`.
 
-**Security canon (2026-08-10):** `disableSignup=true`; matrix `Hudson.Administer` только у `admin` (не `authenticated`); публичный HTTP только через nginx. Re-apply: `../dev/scripts/harden-jenkins-security.sh`.
+**Security canon (2026-08-10):** `disableSignup=true`; matrix **`Hudson.Administer` только у `admin`** (не `authenticated`); публичный HTTP только nginx → `127.0.0.1:8082`. Re-apply: `../dev/scripts/harden-jenkins-security.sh`.
 
 ---
 
