@@ -7,7 +7,6 @@ CONF_SRC="${NGINX_CONF_SRC:-${SCRIPT_DIR}/nginx-jenkins.conf}"
 SITE_NAME="${NGINX_SITE_NAME:-jenkins}"
 SITE_PATH="/etc/nginx/sites-available/${SITE_NAME}"
 TMP="/tmp/nginx-jenkins.generated"
-SSL_SNIPPET="/tmp/nginx-jenkins.ssl-snippet"
 
 if [[ ! -f "$CONF_SRC" ]]; then
   echo "Missing $CONF_SRC" >&2
@@ -24,33 +23,43 @@ fi
 
 cp "$CONF_SRC" "$TMP"
 
-: >"$SSL_SNIPPET"
-if [[ -f "$SITE_PATH" ]]; then
-  grep -E '^\s*ssl_certificate(_key)? ' "$SITE_PATH" | awk '!seen[$0]++' >>"$SSL_SNIPPET" || true
-fi
-if [[ ! -s "$SSL_SNIPPET" ]]; then
-  for domain in jenkins.qa.guru jenkins.qa.guru-0001; do
-    if [[ -f "/etc/letsencrypt/live/${domain}/fullchain.pem" ]]; then
-      {
-        echo "    ssl_certificate /etc/letsencrypt/live/${domain}/fullchain.pem;"
-        echo "    ssl_certificate_key /etc/letsencrypt/live/${domain}/privkey.pem;"
-      } >>"$SSL_SNIPPET"
-      break
-    fi
-  done
-fi
-if [[ -s "$SSL_SNIPPET" ]]; then
-  awk -v sslfile="$SSL_SNIPPET" '
+# Fill leftover placeholders with the Let's Encrypt cert for the nearest
+# server_name. Never copy every ssl_certificate from the live site into every
+# block: stacking RSA (jenkins.qa.guru) + ECDSA (jenkins.autotests.cloud) makes
+# clients pick the RSA cert, which has no autotests.cloud SAN.
+if grep -q '# ssl_certificate \.\.\.;' "$TMP"; then
+  awk '
+    $1 == "server_name" {
+      name = $2
+      sub(/;/, "", name)
+    }
     /# ssl_certificate \.\.\.;/ {
-      while ((getline line < sslfile) > 0) print line
-      close(sslfile)
+      cert = "/etc/letsencrypt/live/" name "/fullchain.pem"
+      key  = "/etc/letsencrypt/live/" name "/privkey.pem"
+      if (name != "" && !system("test -f " cert)) {
+        print "    ssl_certificate " cert ";"
+        print "    ssl_certificate_key " key ";"
+      } else {
+        print "WARN: no cert for server_name " name > "/dev/stderr"
+      }
       next
     }
+    /# ssl_certificate_key \.\.\.;/ { next }
     { print }
   ' "$TMP" >"${TMP}.patched"
   mv "${TMP}.patched" "$TMP"
-else
-  echo "WARN: no ssl_certificate lines found" >&2
+fi
+
+missing=0
+while read -r cert; do
+  [[ -z "$cert" ]] && continue
+  if [[ ! -f "$cert" ]]; then
+    echo "Missing certificate file: $cert" >&2
+    missing=1
+  fi
+done < <(awk '$1 == "ssl_certificate" { gsub(/;/, "", $2); print $2 }' "$TMP")
+if [[ "$missing" -ne 0 ]]; then
+  exit 1
 fi
 
 cp "$TMP" "$SITE_PATH"
