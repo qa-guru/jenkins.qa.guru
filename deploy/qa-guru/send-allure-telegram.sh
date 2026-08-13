@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Shared Jenkins post-build → Telegram (ADR 008, URL contract ADR 010).
 # allure2: jar pin from docs/allure-notifications/JAR-A2-VERSION (4.x A2 pie + text) via proxychains4.
-# allure3: CLI pin from docs/allure-notifications/VERSION (6.x A3 collage) via proxychains4.
+# allure3: CLI pin from docs/allure-notifications/VERSION (6.x A3 collage) via config.proxy (no proxychains).
 #
 # The config comes from the Create/Update Text File build step (notifications/config.json) —
-# this script never patches it (no report-link / allureFolder sed).
+# this script never patches report-link / allureFolder (prepare only injects microsocks auth).
 #
 # Agent helper / bake. Most freestyle jobs inline java -jar (A2) / npx send (A3) for students.
 # Exception (demo contrast): reference-app-tests-freestyle-java-allure2-allure3-sh still calls this.
@@ -58,29 +58,24 @@ if [[ ! -f "$SUMMARY" ]]; then
   exit 0
 fi
 
-if ! command -v proxychains4 >/dev/null 2>&1; then
-  if command -v apk >/dev/null 2>&1; then
-    apk add --no-cache proxychains-ng >/dev/null
-  else
-    echo "proxychains4 missing (install proxychains-ng on agent)" >&2
-    exit 1
-  fi
-fi
-
-PROXYCHAINS_CONFIG=/tmp/proxychains-telegram.conf
 PREPARE="${PREPARE_TELEGRAM_SOCKS_PROXY:-/opt/qa-guru/bin/prepare-telegram-socks-proxy.sh}"
 if [[ ! -x "$PREPARE" ]]; then
   PREPARE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/prepare-telegram-socks-proxy.sh"
 fi
-if [[ "$REPORT" == "allure3" ]]; then
-  "$PREPARE" "$CONFIG" "$PROXYCHAINS_CONFIG"
-else
-  "$PREPARE" "" "$PROXYCHAINS_CONFIG"
-fi
 
-# --- allure2: jar (4.x) ---
-# Jar must not use config.proxy — SOCKS in jar breaks photo upload; egress via proxychains4.
+# --- allure2: jar (4.x) — egress via proxychains4 (jar SOCKS breaks photo upload) ---
 if [[ "$REPORT" == "allure2" ]]; then
+  if ! command -v proxychains4 >/dev/null 2>&1; then
+    if command -v apk >/dev/null 2>&1; then
+      apk add --no-cache proxychains-ng >/dev/null
+    else
+      echo "proxychains4 missing (install proxychains-ng on agent)" >&2
+      exit 1
+    fi
+  fi
+  PROXYCHAINS_CONFIG=/tmp/proxychains-telegram.conf
+  "$PREPARE" - "$PROXYCHAINS_CONFIG"
+
   JAR="allure-notifications-${JAR_VERSION}.jar"
   if [[ ! -f "$JAR" ]]; then
     if ! curl -fsSL -o "$JAR" \
@@ -96,7 +91,9 @@ if [[ "$REPORT" == "allure2" ]]; then
   exit 0
 fi
 
-# --- allure3: CLI collage (6.x) ---
+# --- allure3: CLI collage (6.2.0+) — config.proxy only, no proxychains ---
+"$PREPARE" "$CONFIG"
+
 if [[ -n "${ALLURE_NOTIFICATIONS_VERSION:-}" ]]; then
   VERSION="$ALLURE_NOTIFICATIONS_VERSION"
 elif [[ -f "$VERSION_FILE" ]]; then
@@ -118,7 +115,6 @@ if [[ "$NODE_MAJOR" -lt 20 ]]; then
   exit 1
 fi
 
-echo "allure-notifications@${VERSION} (report=${REPORT}, folder=${ALLURE_FOLDER}, config=${CONFIG})"
-proxychains4 -q -f "$PROXYCHAINS_CONFIG" \
-  npx --yes "allure-notifications@${VERSION}" send --config "$CONFIG" --live
+echo "@qa-guru/allure-notifications@${VERSION} (report=${REPORT}, folder=${ALLURE_FOLDER}, config=${CONFIG})"
+npx --yes "@qa-guru/allure-notifications@${VERSION}" send --config "$CONFIG" --live
 echo "Telegram proxy send OK"
