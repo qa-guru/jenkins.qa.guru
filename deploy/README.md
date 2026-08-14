@@ -104,6 +104,8 @@ Workflow inputs:
 
 Справочный конфиг: [`nginx-jenkins.conf`](nginx-jenkins.conf) — proxy на `127.0.0.1:8082` (вместо публичного IP в legacy-конфиге).
 
+Signup (captcha off): `limit_req` on `GET /signup` (30r/m burst 20) and `POST /securityRealm/createAccount` (6r/m burst 8) → **429**. Zones are at the top of this file (`http{}` via `sites-enabled`).
+
 ```bash
 sudo NGINX_CONF_SRC=./deploy/nginx-jenkins.conf ./deploy/sync-nginx.sh
 ```
