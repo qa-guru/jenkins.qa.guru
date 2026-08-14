@@ -7,7 +7,7 @@
 # this script never patches report-link / allureFolder (prepare only injects microsocks auth).
 #
 # Agent helper / bake. Most freestyle jobs inline java -jar (A2) / npx send (A3) for students.
-# Exception (demo contrast): reference-app-tests-freestyle-java-allure2-allure3-sh still calls this.
+# Exception (demo contrast): autotests-ai-multistack-tests-freestyle-java-allure2-allure3-sh still calls this.
 #
 # Usage (from workspace, optional):
 #   /opt/qa-guru/bin/send-allure-telegram.sh allure2

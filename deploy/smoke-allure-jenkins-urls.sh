@@ -15,19 +15,19 @@ BASE_URL="${BASE_URL%/}"
 
 # job:url-slug  — slug is Jenkins action URL (/allure classic, /allure3 dual-only)
 ALLURE3_JOBS=(
-  reference-app-tests-freestyle-java-allure3:allure
-  reference-app-tests-freestyle-java-allure3-full-attachments:allure
-  reference-app-tests-freestyle-js-allure3:allure
-  reference-app-tests-freestyle-python-allure3:allure
-  reference-app-tests-freestyle-java-allure2-allure3:allure3
+  autotests-ai-multistack-tests-freestyle-java-allure3:allure
+  autotests-ai-multistack-tests-freestyle-java-allure3-full-attachments:allure
+  autotests-ai-multistack-tests-freestyle-js-allure3:allure
+  autotests-ai-multistack-tests-freestyle-python-allure3:allure
+  autotests-ai-multistack-tests-freestyle-java-allure2-allure3:allure3
 )
 
 # job:report-url-slug:permalink[:trend]  — trend=no skips the job-level URL.
 ALLURE2_JOBS=(
-  reference-app-tests-freestyle-java-allure2:allure:lastSuccessfulBuild:trend
-  reference-app-tests-freestyle-js-allure2:allure:lastSuccessfulBuild:trend
-  reference-app-tests-freestyle-python-allure2:allure:lastSuccessfulBuild:trend
-  reference-app-tests-freestyle-java-allure2-allure3:allure2:lastSuccessfulBuild:trend
+  autotests-ai-multistack-tests-freestyle-java-allure2:allure:lastSuccessfulBuild:trend
+  autotests-ai-multistack-tests-freestyle-js-allure2:allure:lastSuccessfulBuild:trend
+  autotests-ai-multistack-tests-freestyle-python-allure2:allure:lastSuccessfulBuild:trend
+  autotests-ai-multistack-tests-freestyle-java-allure2-allure3:allure2:lastSuccessfulBuild:trend
   # Student job: suite is red and the last green build predates report archiving —
   # only the link contract of the latest build is asserted.
   41_MashaSelyanko_proect1:allure:lastCompletedBuild:no-trend
@@ -81,6 +81,29 @@ for entry in "${ALLURE2_JOBS[@]}"; do
   check_url "${job} ${permalink} ${report}" \
     "${BASE_URL}/job/${job}/${permalink}/${report}/index.html"
 done
+
+# Old etalon prefix must 301 onto the new names (one hop; student jobs unchanged).
+check_prefix_301() {
+  local label="$1" url="$2" expect="$3" code target
+  code="$(curl -s -o /dev/null -w '%{http_code}' "$url" || echo 000)"
+  target="$(curl -s -o /dev/null -w '%{redirect_url}' "$url" || true)"
+  target="${target%$'\r'}"
+  if [[ "$code" == "301" && "$target" == "$expect" ]]; then
+    echo "OK  [301] $label"
+  else
+    echo "FAIL [$code] $label → ${target:-no redirect} (want $expect)" >&2
+    fail=1
+  fi
+}
+check_prefix_301 "old prefix job" \
+  "${BASE_URL}/job/reference-app-tests/" \
+  "${BASE_URL}/job/autotests-ai-multistack-tests/"
+check_prefix_301 "old java-allure3 job" \
+  "${BASE_URL}/job/reference-app-tests-freestyle-java-allure3/" \
+  "${BASE_URL}/job/autotests-ai-multistack-tests-freestyle-java-allure3/"
+check_prefix_301 "old short allure3" \
+  "${BASE_URL}/job/reference-app-tests-freestyle-allure3/" \
+  "${BASE_URL}/job/autotests-ai-multistack-tests-freestyle-java-allure3/"
 
 if [[ "$fail" -ne 0 ]]; then
   echo "FAIL: Allure Jenkins URL smoke" >&2
