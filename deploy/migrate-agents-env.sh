@@ -38,6 +38,9 @@ JAVA_JDK21_AGENT_3_SECRET=$(extract_secret java-jdk21-jenkins-agent-3)
 JAVA_JDK21_AGENT_4_SECRET=$(extract_secret java-jdk21-jenkins-agent-4)
 JAVA_JDK21_AGENT_5_SECRET=$(extract_secret java-jdk21-jenkins-agent-5)
 
+# JDK 17 — fill after creating the node in Jenkins (Manage Nodes → secret)
+JAVA_JDK17_AGENT_1_SECRET=replace-me
+
 PYTHON_PYTHON314_AGENT_1_SECRET=$(extract_secret python-python314-jenkins-agent-1)
 PYTHON_PYTHON314_AGENT_2_SECRET=$(extract_secret python-python314-jenkins-agent-2)
 PYTHON_PYTHON314_AGENT_3_SECRET=$(extract_secret python-python314-jenkins-agent-3)

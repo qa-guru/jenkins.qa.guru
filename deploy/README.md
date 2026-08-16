@@ -9,6 +9,7 @@ Jenkins controller + inbound agents через Docker Compose на prod-хост
   docker-compose.yml
   agents.env              ← секреты (не в git)
   java-jdk21-agent/Dockerfile
+  java-jdk17-agent/Dockerfile
   python-python314-agent/Dockerfile
   js-node24-agent/Dockerfile
   qa-guru/send-allure-telegram.sh   ← baked into agents → /opt/qa-guru/bin/
@@ -22,6 +23,7 @@ Jenkins controller + inbound agents через Docker Compose на prod-хост
 |--------|-------|-------|
 | jenkins | `jenkins/jenkins:jdk21` | **`127.0.0.1:8082`→8080**, **`127.0.0.1:50000`** (не `0.0.0.0`) |
 | java-jdk21-jenkins-agent-{1..5} | `java-jdk21-jenkins-agent-ext` | internal |
+| java-jdk17-jenkins-agent-1 | `java-jdk17-jenkins-agent-ext` (remoting 21, `JAVA_HOME` 17) | internal |
 | python-python314-jenkins-agent-{1..5} | `python-python314-jenkins-agent-ext` | internal |
 | js-node24-jenkins-agent-{1..5} | `js-node24-jenkins-agent-ext` | internal |
 

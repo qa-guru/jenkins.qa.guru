@@ -9,7 +9,7 @@ Production-деплой Jenkins на том же хосте, что и [selenoid
 | Agent port | **50000** |
 | Compose | `/var/docker-compose-config/docker-compose.yml` |
 | JENKINS_HOME | `/var/jenkins_home` (не трогаем при деплое) |
-| Agents | 5× java-jdk21 + 5× python-python314 + 5× js-node24 (Docker) |
+| Agents | 5× java-jdk21 + 1× java-jdk17 + 5× python-python314 + 5× js-node24 (Docker) |
 
 ## Быстрый старт
 

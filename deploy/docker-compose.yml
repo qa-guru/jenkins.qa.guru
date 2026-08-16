@@ -140,6 +140,27 @@ services:
           cpus: "1.0"
           memory: 2G
 
+  java-jdk17-jenkins-agent-1:
+    image: java-jdk17-jenkins-agent-ext
+    build:
+      context: .
+      dockerfile: java-jdk17-agent/Dockerfile
+    init: true
+    user: root
+    command: >-
+      /opt/java/openjdk/bin/java -jar /usr/share/jenkins/agent.jar
+      -url http://jenkins:8080
+      ${JAVA_JDK17_AGENT_1_SECRET}
+      java-jdk17-jenkins-agent-1
+    restart: unless-stopped
+    networks:
+      - my-network
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
+
   python-python314-jenkins-agent-1:
     image: python-python314-jenkins-agent-ext
     build:
