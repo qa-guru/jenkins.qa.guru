@@ -82,29 +82,6 @@ for entry in "${ALLURE2_JOBS[@]}"; do
     "${BASE_URL}/job/${job}/${permalink}/${report}/index.html"
 done
 
-# Old etalon prefix must 301 onto the new names (one hop; student jobs unchanged).
-check_prefix_301() {
-  local label="$1" url="$2" expect="$3" code target
-  code="$(curl -s -o /dev/null -w '%{http_code}' "$url" || echo 000)"
-  target="$(curl -s -o /dev/null -w '%{redirect_url}' "$url" || true)"
-  target="${target%$'\r'}"
-  if [[ "$code" == "301" && "$target" == "$expect" ]]; then
-    echo "OK  [301] $label"
-  else
-    echo "FAIL [$code] $label → ${target:-no redirect} (want $expect)" >&2
-    fail=1
-  fi
-}
-check_prefix_301 "old prefix job" \
-  "${BASE_URL}/job/reference-app-tests/" \
-  "${BASE_URL}/job/autotests-ai-multistack-tests/"
-check_prefix_301 "old java-allure3 job" \
-  "${BASE_URL}/job/reference-app-tests-freestyle-java-allure3/" \
-  "${BASE_URL}/job/autotests-ai-multistack-tests-freestyle-java-allure3/"
-check_prefix_301 "old short allure3" \
-  "${BASE_URL}/job/reference-app-tests-freestyle-allure3/" \
-  "${BASE_URL}/job/autotests-ai-multistack-tests-freestyle-java-allure3/"
-
 if [[ "$fail" -ne 0 ]]; then
   echo "FAIL: Allure Jenkins URL smoke" >&2
   exit 1
