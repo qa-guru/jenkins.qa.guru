@@ -9,7 +9,8 @@ COPY --from=temurin17 /opt/java/openjdk /opt/java/jdk-17
 ENV JAVA_HOME=/opt/java/jdk-17
 ENV PATH="/opt/java/jdk-17/bin:/opt/java/openjdk/bin:/opt/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-ARG NODE_VER=24.11.0
+# npx allure-notifications 6.2.2 requires Node >=26.
+ARG NODE_VER=26.7.0
 ARG ALLURE_CLI_VER=3.13.0
 
 RUN apt-get update \
@@ -18,6 +19,7 @@ RUN apt-get update \
         curl \
         ca-certificates \
         proxychains4 \
+        libatomic1 \
         zip \
         unzip \
     && curl -fsSL "https://nodejs.org/dist/v${NODE_VER}/node-v${NODE_VER}-linux-x64.tar.gz" \

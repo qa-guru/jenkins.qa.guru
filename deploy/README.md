@@ -22,10 +22,10 @@ Jenkins controller + inbound agents через Docker Compose на prod-хост
 | Сервис | Образ | Порты |
 |--------|-------|-------|
 | jenkins | `jenkins/jenkins:jdk21` | **`127.0.0.1:8082`→8080**, **`127.0.0.1:50000`** (не `0.0.0.0`) |
-| java-jdk21-jenkins-agent-{1..5} | `java-jdk21-jenkins-agent-ext` | internal |
-| java-jdk17-jenkins-agent-1 | `java-jdk17-jenkins-agent-ext` (remoting 21, `JAVA_HOME` 17) | internal |
-| python-python314-jenkins-agent-{1..5} | `python-python314-jenkins-agent-ext` | internal |
-| js-node24-jenkins-agent-{1..5} | `js-node24-jenkins-agent-ext` | internal |
+| java-jdk21-jenkins-agent-{1..5} | `java-jdk21-jenkins-agent-ext` (Node **26.7.0** for A3 CLI) | internal |
+| java-jdk17-jenkins-agent-1 | `java-jdk17-jenkins-agent-ext` (remoting 21, `JAVA_HOME` 17, Node **26.7.0**) | internal |
+| python-python314-jenkins-agent-{1..5} | `python-python314-jenkins-agent-ext` (Node **26.7.0** musl) | internal |
+| js-node24-jenkins-agent-{1..5} | `js-node24-jenkins-agent-ext` (Node **26.7.0**, label stays `js-node24`) | internal |
 
 Nginx: `/etc/nginx/sites-available/jenkins` → `127.0.0.1:8082`.
 

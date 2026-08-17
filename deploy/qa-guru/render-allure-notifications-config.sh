@@ -28,7 +28,7 @@ esac
 REPORT_DIR="$FLAVOR"
 RESULTS_DIR=""
 COMMENT=""
-ENVIRONMENT="reference_prod"
+ENVIRONMENT="multistack_prod"
 LANGUAGE="ru"
 TESTOPS_URL=""
 OUT="notifications/config.json"

@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Shared Jenkins post-build → Telegram (ADR 008, URL contract ADR 010).
 # allure2: jar pin from docs/allure-notifications/JAR-A2-VERSION (4.x A2 pie + text) via proxychains4.
-# allure3: CLI pin from docs/allure-notifications/VERSION (6.x A3 collage) via config.proxy (no proxychains).
+# allure3: CLI pin from docs/allure-notifications/VERSION (6.x A3 collage) via proxychains4
+# (undici config.proxy + multipart sendPhoto drops the photo).
 #
 # The config comes from the Create/Update Text File build step (notifications/config.json) —
-# this script never patches report-link / allureFolder (prepare only injects microsocks auth).
+# this script never patches report-link / allureFolder (prepare writes proxychains conf and strips config.proxy).
 #
 # Agent helper / bake. Most freestyle jobs inline java -jar (A2) / npx send (A3) for students.
 # Exception (demo contrast): autotests-ai-multistack-tests-freestyle-java-allure2-allure3-sh still calls this.
@@ -91,8 +92,17 @@ if [[ "$REPORT" == "allure2" ]]; then
   exit 0
 fi
 
-# --- allure3: CLI collage (6.2.0+) — config.proxy only, no proxychains ---
-"$PREPARE" "$CONFIG"
+# --- allure3: CLI collage (6.2.x) — proxychains4 (undici SOCKS drops sendPhoto) ---
+if ! command -v proxychains4 >/dev/null 2>&1; then
+  if command -v apk >/dev/null 2>&1; then
+    apk add --no-cache proxychains-ng >/dev/null
+  else
+    echo "proxychains4 missing (install proxychains-ng / proxychains4 on agent)" >&2
+    exit 1
+  fi
+fi
+PROXYCHAINS_CONFIG=/tmp/proxychains-telegram.conf
+"$PREPARE" "$CONFIG" "$PROXYCHAINS_CONFIG"
 
 if [[ -n "${ALLURE_NOTIFICATIONS_VERSION:-}" ]]; then
   VERSION="$ALLURE_NOTIFICATIONS_VERSION"
@@ -106,15 +116,19 @@ if [[ -z "$VERSION" ]]; then
 fi
 
 if ! command -v node >/dev/null 2>&1; then
-  echo "Node ≥ 20 required for allure-notifications CLI (node missing)"
+  echo "Node ≥ 26 required for allure-notifications CLI (node missing)"
   exit 1
 fi
 NODE_MAJOR="$(node -v | sed 's/^v//' | cut -d. -f1)"
-if [[ "$NODE_MAJOR" -lt 20 ]]; then
-  echo "Node ≥ 20 required for allure-notifications CLI (got: $(node -v))"
+if [[ "$NODE_MAJOR" -lt 26 ]]; then
+  echo "Node ≥ 26 required for allure-notifications CLI (got: $(node -v))"
   exit 1
 fi
 
 echo "@qa-guru/allure-notifications@${VERSION} (report=${REPORT}, folder=${ALLURE_FOLDER}, config=${CONFIG})"
-npx --yes "@qa-guru/allure-notifications@${VERSION}" send --config "$CONFIG" --live
+# Warm npx cache against registry (not through SOCKS). Then sendPhoto via proxychains.
+npx --yes --package "@qa-guru/allure-notifications@${VERSION}" -- allure-notifications --help >/dev/null
+proxychains4 -q -f "$PROXYCHAINS_CONFIG" \
+  npx --offline --package "@qa-guru/allure-notifications@${VERSION}" -- \
+  allure-notifications send --config "$CONFIG" --live
 echo "Telegram proxy send OK"

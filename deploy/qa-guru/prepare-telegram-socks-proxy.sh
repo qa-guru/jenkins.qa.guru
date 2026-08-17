@@ -1,17 +1,19 @@
 #!/usr/bin/env bash
 # Inject microsocks creds for Telegram egress on qa.guru agents.
 #
-# CLI 6.2.0+ reads config.proxy (undici Socks5ProxyAgent) — no proxychains needed.
-# A2 jar still needs proxychains4 (jar SOCKS breaks photo upload).
+# A3 CLI 6.2.x: undici Socks5ProxyAgent + multipart sendPhoto drops the photo
+# ("there is no photo in the request"). Use proxychains4 like the A2 jar.
+# Passing <proxychains.conf> writes the conf and strips config.proxy so the CLI
+# does not wrap SOCKS on top of LD_PRELOAD.
 #
 # Usage:
 #   prepare-telegram-socks-proxy.sh <config.json>
-#       → patch config.proxy.username/password from /opt/qa-guru/etc/microsocks.env
+#       → patch config.proxy.username/password (legacy undici path; do not use for sendPhoto)
 #   prepare-telegram-socks-proxy.sh - <proxychains.conf>
 #       → write proxychains conf only (A2 jar; "-" = no JSON). Do not use "" —
 #         busybox `sh -xe` drops empty args and the console looks like a one-arg call.
 #   prepare-telegram-socks-proxy.sh <config.json> <proxychains.conf>
-#       → both (legacy)
+#       → proxychains conf + strip config.proxy (A3 CLI sendPhoto)
 set -euo pipefail
 
 CONFIG="${1:-}"
@@ -51,13 +53,16 @@ EOF
 fi
 
 if [[ -n "$CONFIG" && -f "$CONFIG" ]]; then
-  CONFIG="$CONFIG" node -e '
+  CONFIG="$CONFIG" PROXYCHAINS="$PROXYCHAINS" node -e '
 const fs = require("fs");
 const configPath = process.env.CONFIG;
 const cfg = JSON.parse(fs.readFileSync(configPath, "utf8"));
-if (!cfg.proxy) process.exit(0);
-cfg.proxy.username = process.env.MICROSOCKS_USER;
-cfg.proxy.password = process.env.MICROSOCKS_PASS;
+if (process.env.PROXYCHAINS) {
+  delete cfg.proxy;
+} else if (cfg.proxy) {
+  cfg.proxy.username = process.env.MICROSOCKS_USER;
+  cfg.proxy.password = process.env.MICROSOCKS_PASS;
+}
 fs.writeFileSync(configPath, JSON.stringify(cfg, null, 2));
 '
 elif [[ -n "$CONFIG" && "$CONFIG" != "" ]]; then

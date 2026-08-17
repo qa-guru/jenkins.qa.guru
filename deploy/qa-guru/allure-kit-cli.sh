@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Allure 3 CLI wrapper for Multistack @qa-guru/allure-report-kit soft-forks.
+# Allure 3 CLI wrapper for autotests-ai-multistack-app @qa-guru/allure-report-kit soft-forks.
 # Linked over `allure` on PATH (java/js: /opt/node/bin/allure; python: /usr/local/bin/allure).
 set -euo pipefail
 
