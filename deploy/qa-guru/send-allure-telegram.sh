@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # Shared Jenkins post-build → Telegram (ADR 008, URL contract ADR 010).
-# allure2: jar pin from docs/allure-notifications/JAR-A2-VERSION (4.x A2 pie + text) via proxychains4.
-# allure3: CLI pin from docs/allure-notifications/VERSION (6.x A3 collage) via proxychains4
-# (undici config.proxy + multipart sendPhoto drops the photo).
+# allure2: jar pin from docs/allure-notifications/JAR-A2-VERSION (4.x A2 pie + text).
+# allure3: CLI pin from docs/allure-notifications/VERSION (6.x A3 collage).
 #
-# The config comes from the Create/Update Text File build step (notifications/config.json) —
-# this script never patches report-link / allureFolder (prepare writes proxychains conf and strips config.proxy).
+# Egress is config.proxy in notifications/config.json (socks5 host/port).
+# This script does not wrap java/npx with proxychains and does not patch the JSON.
+#
+# The config comes from the Create/Update Text File build step (notifications/config.json).
 #
 # Agent helper / bake. Most freestyle jobs inline java -jar (A2) / npx send (A3) for students.
 # Exception (demo contrast): autotests-ai-multistack-tests-freestyle-java-allure2-allure3-sh still calls this.
@@ -59,24 +60,21 @@ if [[ ! -f "$SUMMARY" ]]; then
   exit 0
 fi
 
-PREPARE="${PREPARE_TELEGRAM_SOCKS_PROXY:-/opt/qa-guru/bin/prepare-telegram-socks-proxy.sh}"
-if [[ ! -x "$PREPARE" ]]; then
-  PREPARE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/prepare-telegram-socks-proxy.sh"
-fi
-
-# --- allure2: jar (4.x) — egress via proxychains4 (jar SOCKS breaks photo upload) ---
-if [[ "$REPORT" == "allure2" ]]; then
-  if ! command -v proxychains4 >/dev/null 2>&1; then
-    if command -v apk >/dev/null 2>&1; then
-      apk add --no-cache proxychains-ng >/dev/null
-    else
-      echo "proxychains4 missing (install proxychains-ng on agent)" >&2
+send_with_retry() {
+  local n=0
+  until "$@"; do
+    n=$((n + 1))
+    if [[ "$n" -ge 3 ]]; then
+      echo "Telegram send failed after 3 attempts" >&2
       exit 1
     fi
-  fi
-  PROXYCHAINS_CONFIG=/tmp/proxychains-telegram.conf
-  "$PREPARE" - "$PROXYCHAINS_CONFIG"
+    echo "Telegram send attempt ${n} failed, retry in 2s"
+    sleep 2
+  done
+}
 
+# --- allure2: jar (4.x) — SOCKS from config.proxy ---
+if [[ "$REPORT" == "allure2" ]]; then
   JAR="allure-notifications-${JAR_VERSION}.jar"
   if [[ ! -f "$JAR" ]]; then
     if ! curl -fsSL -o "$JAR" \
@@ -86,23 +84,10 @@ if [[ "$REPORT" == "allure2" ]]; then
     fi
   fi
   echo "allure-notifications jar ${JAR_VERSION} (report=${REPORT}, folder=${ALLURE_FOLDER}, config=${CONFIG})"
-  proxychains4 -q -f "$PROXYCHAINS_CONFIG" \
-    java -DconfigFile="${CONFIG}" -jar "$JAR"
-  echo "Telegram proxy send OK"
+  send_with_retry java -DconfigFile="${CONFIG}" -jar "$JAR"
+  echo "Telegram send OK"
   exit 0
 fi
-
-# --- allure3: CLI collage (6.2.x) — proxychains4 (undici SOCKS drops sendPhoto) ---
-if ! command -v proxychains4 >/dev/null 2>&1; then
-  if command -v apk >/dev/null 2>&1; then
-    apk add --no-cache proxychains-ng >/dev/null
-  else
-    echo "proxychains4 missing (install proxychains-ng / proxychains4 on agent)" >&2
-    exit 1
-  fi
-fi
-PROXYCHAINS_CONFIG=/tmp/proxychains-telegram.conf
-"$PREPARE" "$CONFIG" "$PROXYCHAINS_CONFIG"
 
 if [[ -n "${ALLURE_NOTIFICATIONS_VERSION:-}" ]]; then
   VERSION="$ALLURE_NOTIFICATIONS_VERSION"
@@ -126,9 +111,6 @@ if [[ "$NODE_MAJOR" -lt 26 ]]; then
 fi
 
 echo "@qa-guru/allure-notifications@${VERSION} (report=${REPORT}, folder=${ALLURE_FOLDER}, config=${CONFIG})"
-# Warm npx cache against registry (not through SOCKS). Then sendPhoto via proxychains.
-npx --yes --package "@qa-guru/allure-notifications@${VERSION}" -- allure-notifications --help >/dev/null
-proxychains4 -q -f "$PROXYCHAINS_CONFIG" \
-  npx --offline --package "@qa-guru/allure-notifications@${VERSION}" -- \
+send_with_retry npx --yes --package "@qa-guru/allure-notifications@${VERSION}" -- \
   allure-notifications send --config "$CONFIG" --live
-echo "Telegram proxy send OK"
+echo "Telegram send OK"
