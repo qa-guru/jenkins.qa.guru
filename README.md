@@ -1,6 +1,6 @@
 # jenkins.qa.guru
 
-Production-деплой Jenkins на том же хосте, что и [selenoid.qa.guru](https://selenoid.qa.guru): **https://jenkins.qa.guru**
+Production-деплой Jenkins на **Selectel Box2** (`89.248.193.83`, `ssh box2-ci`), не на Selenoid Box1: **https://jenkins.qa.guru**
 
 | На сервере | Значение |
 |------------|----------|
@@ -23,7 +23,7 @@ Production-деплой Jenkins на том же хосте, что и [selenoid
 
 ## Связь с Selenoid
 
-Jenkins и Selenoid на **136.243.89.21** (8 vCPU, 31 GB RAM). Warm pool CI (будущее) — co-located: agent → `127.0.0.1:4444` / orchestrator `:9090`.
+Jenkins на **Selectel Box2** `89.248.193.83`. Selenoid на Box1 `89.248.192.30`. Warm pool CI (будущее) — agent → Box1 `:4444` / orchestrator `:9090` по сети, не co-located 127.0.0.1.
 
 ## Репозиторий
 

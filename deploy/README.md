@@ -78,11 +78,11 @@ Workflow [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml):
 
 ### Environment `jenkins-production`
 
-Можно переиспользовать secrets от Selenoid (тот же хост и пользователь `selenoid`):
+Можно не переиспользовать Selenoid SSH: Jenkins живёт на **другом** хосте (Box2).
 
 | Secret | Fallback | Описание |
 |--------|----------|----------|
-| `JENKINS_DEPLOY_HOST` | `SELENOID_DEPLOY_HOST` | `136.243.89.21` |
+| `JENKINS_DEPLOY_HOST` | — | `89.248.193.83` (Box2; не Selenoid Box1) |
 | `JENKINS_DEPLOY_USER` | `SELENOID_DEPLOY_USER` | `selenoid` |
 | `JENKINS_DEPLOY_KEY` | `SELENOID_DEPLOY_KEY` | SSH private key |
 
