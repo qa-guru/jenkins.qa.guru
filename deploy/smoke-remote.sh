@@ -9,8 +9,8 @@ echo "GET ${BASE_URL}/login → HTTP ${code}"
 
 signup="$(curl -s -o /dev/null -w '%{http_code}' "${BASE_URL}/signup" || true)"
 echo "GET ${BASE_URL}/signup → HTTP ${signup}"
-if [[ "$signup" != "200" && "$signup" != "404" ]]; then
-  echo "FAIL: expected 200 (open) or 404 (locked) from /signup, got ${signup}" >&2
+if [[ "$signup" != "404" ]]; then
+  echo "FAIL: expected 404 from /signup after P4 oic-auth, got ${signup}" >&2
   exit 1
 fi
 

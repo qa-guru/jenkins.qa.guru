@@ -29,7 +29,9 @@ Jenkins controller + inbound agents через Docker Compose на prod-хост
 
 Nginx: `/etc/nginx/sites-available/jenkins` → `127.0.0.1:8082`.
 
-**Security canon (2026-08-10):** `disableSignup=true`; matrix **`Hudson.Administer` только у `admin`** (не `authenticated`); публичный HTTP только nginx → `127.0.0.1:8082`. Re-apply: `../dev/scripts/harden-jenkins-security.sh`.
+**Security canon (P4 2026-09-05):** `oic-auth` + Role Strategy (`/staff` `/mentors` `/students`). `/signup` 404. Break-glass — `escapeHatch` user `admin`. Re-apply: `python3 deploy/oidc.py verify`. **Do not** run `../dev/scripts/harden-jenkins-security.sh` — it rewinds to HudsonPrivate.
+
+**Security canon (2026-08-10, superseded):** matrix `Hudson.Administer` только у `admin`; публичный HTTP только nginx → `127.0.0.1:8082`.
 
 ---
 
@@ -99,6 +101,24 @@ Workflow inputs:
 ### Secrets agent'ов
 
 **Не хранить в GitHub.** Файл `/var/docker-compose-config/agents.env` создаётся один раз на сервере (`migrate-agents-env.sh` или вручную).
+
+---
+
+## OIDC (P4)
+
+Keycloak [auth.qa.guru](https://auth.qa.guru), client `jenkins`. Группы в claim `groups` со слешем. Секреты — `~/.config` (mode 600).
+
+```bash
+python3 ./deploy/oidc.py inventory          # первый запуск → before.json
+python3 ./deploy/oidc.py seed-idp          # пилоты + live students; пароли в ~/.config
+python3 ./deploy/oidc.py install-plugins   # oic-auth + role-strategy, restart Jenkins
+python3 ./deploy/oidc.py configure
+python3 ./deploy/oidc.py login-check      # staff ≠ mentors ≠ students
+python3 ./deploy/oidc.py verify          # /signup 404, user count, admin token
+python3 ./deploy/oidc.py break-glass      # sudo docker stop/start IdP-контейнера
+```
+
+Инвентарь — `~/.config/jenkins/p4-inventory/` (не git). escapeHatch — `~/.config/jenkins/escape-hatch.env`.
 
 ---
 

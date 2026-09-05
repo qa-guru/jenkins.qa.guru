@@ -2,3 +2,5 @@
 *.log
 agents.env
 plugins/
+__pycache__/
+
