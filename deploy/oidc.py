@@ -10,6 +10,7 @@ Secrets stay in ~/.config (mode 600). Nothing here is printed.
   python3 deploy/oidc.py login-check
   python3 deploy/oidc.py verify
   python3 deploy/oidc.py break-glass
+  python3 deploy/oidc.py revert-local
 """
 from __future__ import annotations
 
@@ -692,6 +693,7 @@ realm.setFullNameFieldName("name")
 realm.setEmailFieldName("email")
 realm.setGroupsFieldName("groups")
 realm.setLogoutFromOpenidProvider(true)
+realm.setPostLogoutRedirectUrl("https://jenkins.qa.guru/OicLogout")
 realm.setAllowTokenAccessWithoutOicSession(true)
 realm.setRootURLFromRequest(true)
 realm.setProperties([
@@ -826,6 +828,83 @@ echo backup=/var/jenkins_home/.p4-oidc-backup-{ts}
         raise SystemExit("configure did not switch security realm")
     if "RoleBasedAuthorizationStrategy" not in out:
         raise SystemExit("configure did not switch Role Strategy")
+    return 0
+
+
+GROOVY_REVERT_LOCAL = r"""
+import jenkins.model.Jenkins
+import hudson.security.HudsonPrivateSecurityRealm
+import hudson.security.ProjectMatrixAuthorizationStrategy
+import hudson.model.Item
+import hudson.model.View
+
+def j = Jenkins.get()
+def current = j.getSecurityRealm().getClass().getName()
+if (current.contains("HudsonPrivateSecurityRealm")) {
+  println "already=HudsonPrivate"
+  println "realm=" + current
+  println "auth=" + j.getAuthorizationStrategy().getClass().getName()
+  return
+}
+
+def realm = new HudsonPrivateSecurityRealm(false, true, null)
+def strategy = new ProjectMatrixAuthorizationStrategy()
+strategy.add(Jenkins.ADMINISTER, "admin")
+strategy.add(Jenkins.ADMINISTER, "svasenkov")
+strategy.add(Jenkins.READ, "anonymous")
+strategy.add(Jenkins.READ, "authenticated")
+strategy.add(Item.BUILD, "authenticated")
+strategy.add(Item.CANCEL, "authenticated")
+strategy.add(Item.CONFIGURE, "authenticated")
+strategy.add(Item.CREATE, "authenticated")
+strategy.add(Item.DELETE, "authenticated")
+strategy.add(Item.DISCOVER, "authenticated")
+strategy.add(Item.READ, "authenticated")
+strategy.add(Item.WORKSPACE, "authenticated")
+strategy.add(View.READ, "authenticated")
+
+j.setAuthorizationStrategy(strategy)
+j.setSecurityRealm(realm)
+j.save()
+println "realm=" + j.getSecurityRealm().getClass().getName()
+println "auth=" + j.getAuthorizationStrategy().getClass().getName()
+println "signupClosed=" + (!j.getSecurityRealm().allowsSignup())
+"""
+
+
+def cmd_revert_local() -> int:
+    """HudsonPrivate + ProjectMatrix. Signup stays closed. OIDC/Keycloak untouched."""
+    ts = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+    offbox = Path.home() / ".config/jenkins" / f"p4-rollback-{ts}"
+    offbox.mkdir(mode=0o700, parents=True, exist_ok=True)
+    ssh(
+        BOX2,
+        f"""
+set -euo pipefail
+sudo mkdir -p /var/jenkins_home/.p4-rollback-{ts}
+sudo cp -a /var/jenkins_home/config.xml /var/jenkins_home/.p4-rollback-{ts}/config.xml
+echo backup=/var/jenkins_home/.p4-rollback-{ts}
+""",
+    )
+    subprocess.run(
+        [
+            "scp",
+            "-o",
+            "BatchMode=yes",
+            f"{BOX2}:/var/jenkins_home/.p4-rollback-{ts}/config.xml",
+            str(offbox / "config.xml"),
+        ],
+        check=True,
+        capture_output=True,
+    )
+    (offbox / "config.xml").chmod(0o600)
+    out = jenkins_groovy(GROOVY_REVERT_LOCAL)
+    print(out.strip())
+    print(f"offbox={offbox}")
+    if "hudson.security.HudsonPrivateSecurityRealm" not in out:
+        raise SystemExit("revert-local did not switch security realm")
+    if "ProjectMatrixAuthorizationStrategy" not in out and "already=HudsonPrivate" not in out:
+        raise SystemExit("revert-local did not switch authorization strategy")
     return 0
 
 
@@ -1165,7 +1244,16 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument(
         "command",
-        choices=("inventory", "seed-idp", "install-plugins", "configure", "login-check", "verify", "break-glass"),
+        choices=(
+            "inventory",
+            "seed-idp",
+            "install-plugins",
+            "configure",
+            "login-check",
+            "verify",
+            "break-glass",
+            "revert-local",
+        ),
     )
     args = parser.parse_args()
     dispatch = {
@@ -1176,6 +1264,7 @@ def main() -> int:
         "login-check": cmd_login_check,
         "verify": cmd_verify,
         "break-glass": cmd_break_glass,
+        "revert-local": cmd_revert_local,
     }
     return dispatch[args.command]()
 
