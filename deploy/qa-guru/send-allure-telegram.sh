@@ -25,7 +25,7 @@ if [[ -n "${ALLURE_NOTIFICATIONS_JAR_VERSION:-}" ]]; then
 elif [[ -f "$JAR_VERSION_FILE" ]]; then
   JAR_VERSION="$(tr -d '[:space:]' <"$JAR_VERSION_FILE")"
 else
-  JAR_VERSION=4.11.0
+  JAR_VERSION=4.11.1
 fi
 
 if [[ "$REPORT" != "allure2" && "$REPORT" != "allure3" ]]; then
