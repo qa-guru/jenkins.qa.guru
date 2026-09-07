@@ -64,10 +64,10 @@ PILOT_PEOPLE = (
         "env_user": "PILOT_STAFF_USERNAME",
         "env_pass": "PILOT_STAFF_PASSWORD",
         "env_email": "PILOT_STAFF_EMAIL",
-        "username": "svasenkov",
-        "email": "svasenkov@qa.guru",
-        "firstName": "Stanislav",
-        "lastName": "Vasenkov",
+        "username": "staff-pilot",
+        "email": "staff-pilot@qa.guru",
+        "firstName": "Staff",
+        "lastName": "Pilot",
         "groups": ["/staff"],
         "expect_manage": True,
         "group": "/staff",
@@ -409,8 +409,8 @@ def cmd_inventory() -> int:
 def ensure_pilot_env() -> dict[str, str]:
     env = load_kv(PILOT_ENV_FILE)
     updates = {
-        "PILOT_STAFF_USERNAME": env.get("PILOT_STAFF_USERNAME") or "svasenkov",
-        "PILOT_STAFF_EMAIL": env.get("PILOT_STAFF_EMAIL") or "svasenkov@qa.guru",
+        "PILOT_STAFF_USERNAME": env.get("PILOT_STAFF_USERNAME") or "staff-pilot",
+        "PILOT_STAFF_EMAIL": env.get("PILOT_STAFF_EMAIL") or "staff-pilot@qa.guru",
         "PILOT_STAFF_PASSWORD": env.get("PILOT_STAFF_PASSWORD") or secrets.token_urlsafe(18),
         "PILOT_MENTOR_USERNAME": env.get("PILOT_MENTOR_USERNAME") or "mentor-pilot",
         "PILOT_MENTOR_EMAIL": env.get("PILOT_MENTOR_EMAIL") or "mentor-pilot@qa.guru",
