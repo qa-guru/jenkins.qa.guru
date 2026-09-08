@@ -156,7 +156,8 @@ def result = [
   hasOic: pluginShort.any { it.shortName == "oic-auth" },
   hasRoleStrategy: pluginShort.any { it.shortName == "role-strategy" },
   oicVersion: pluginShort.find { it.shortName == "oic-auth" }?.version,
-  roleStrategyVersion: pluginShort.find { it.shortName == "role-strategy" }?.version
+  roleStrategyVersion: pluginShort.find { it.shortName == "role-strategy" }?.version,
+  rootURLFromRequest: realm.metaClass.respondsTo(realm, "isRootURLFromRequest") ? realm.isRootURLFromRequest() : null
 ]
 println new JsonBuilder(result).toPrettyString()
 """
@@ -695,7 +696,9 @@ realm.setGroupsFieldName("groups")
 realm.setLogoutFromOpenidProvider(true)
 realm.setPostLogoutRedirectUrl("https://jenkins.qa.guru/OicLogout")
 realm.setAllowTokenAccessWithoutOicSession(true)
-realm.setRootURLFromRequest(true)
+// false: token refresh runs in a servlet filter before Stapler binds the request.
+// getRootUrlFromRequest() there throws and 500s every asset (oic-auth #506).
+realm.setRootURLFromRequest(false)
 realm.setProperties([
   new EscapeHatch("admin", "/staff", Secret.fromString(hatchSecret)),
   new Pkce()
@@ -1155,6 +1158,7 @@ def cmd_verify() -> int:
     raw = jenkins_groovy(GROOVY_INVENTORY)
     data = json.loads(raw)
     check("oic-auth realm", "OicSecurityRealm" in str(data.get("realm")), str(data.get("realm")))
+    check("root URL from request off", data.get("rootURLFromRequest") is False, str(data.get("rootURLFromRequest")))
     check("Role Strategy", "RoleBasedAuthorizationStrategy" in str(data.get("authorization")), str(data.get("authorization")))
     check("signup closed", data.get("allowsSignup") is False, str(data.get("allowsSignup")))
     signup = http_code(f"{JENKINS_URL}/signup")
