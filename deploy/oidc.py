@@ -157,7 +157,11 @@ def result = [
   hasRoleStrategy: pluginShort.any { it.shortName == "role-strategy" },
   oicVersion: pluginShort.find { it.shortName == "oic-auth" }?.version,
   roleStrategyVersion: pluginShort.find { it.shortName == "role-strategy" }?.version,
-  rootURLFromRequest: realm.metaClass.respondsTo(realm, "isRootURLFromRequest") ? realm.isRootURLFromRequest() : null
+  rootURLFromRequest: realm.metaClass.respondsTo(realm, "isRootURLFromRequest") ? realm.isRootURLFromRequest() : null,
+  missingIdStrategy: realm.metaClass.respondsTo(realm, "isMissingIdStrategy") ? realm.isMissingIdStrategy() : null,
+  userIdStrategy: realm.getUserIdStrategy()?.getClass()?.getName(),
+  groupIdStrategy: realm.getGroupIdStrategy()?.getClass()?.getName(),
+  projectNamingStrategy: j.getProjectNamingStrategy()?.getClass()?.getName()
 ]
 println new JsonBuilder(result).toPrettyString()
 """
@@ -670,6 +674,7 @@ import hudson.model.View
 import hudson.util.Secret
 import jenkins.model.Jenkins
 import hudson.security.Permission
+import jenkins.model.IdStrategy
 import org.jenkinsci.plugins.oic.OicSecurityRealm
 import org.jenkinsci.plugins.oic.OicServerWellKnownConfiguration
 import org.jenkinsci.plugins.oic.properties.EscapeHatch
@@ -687,7 +692,7 @@ def hatchSecret = new File("/var/jenkins_home/.p4_escape_hatch_secret").text.tri
 def wellKnown = new OicServerWellKnownConfiguration("{WELL_KNOWN}")
 wellKnown.setScopesOverride("openid profile email")
 
-def realm = new OicSecurityRealm("jenkins", Secret.fromString(clientSecret), wellKnown, false, null, null)
+def realm = new OicSecurityRealm("jenkins", Secret.fromString(clientSecret), wellKnown, false, IdStrategy.CASE_INSENSITIVE, IdStrategy.CASE_INSENSITIVE)
 realm.createProxyAwareResourceRetriver()
 realm.setUserNameField("preferred_username")
 realm.setFullNameFieldName("name")
@@ -778,10 +783,10 @@ itemMap.assignRole(studentWorkRole, new PermissionEntry(AuthorizationType.GROUP,
 
 try {{
   def nsClass = Class.forName("org.jenkinsci.plugins.rolestrategy.RoleBasedProjectNamingStrategy")
-  j.setProjectNamingStrategy(nsClass.getDeclaredConstructor().newInstance())
-  println "namingStrategy=role-based"
+  j.setProjectNamingStrategy(nsClass.getDeclaredConstructor(boolean).newInstance(false))
+  println "namingStrategy=role-based forceExistingJobs=false"
 }} catch (Throwable t) {{
-  println "namingStrategy=unchanged " + t.getClass().getSimpleName()
+  println "namingStrategy=unchanged " + t.getClass().getSimpleName() + " " + t.getMessage()
 }}
 
 j.setAuthorizationStrategy(rbas)
@@ -1159,7 +1164,11 @@ def cmd_verify() -> int:
     data = json.loads(raw)
     check("oic-auth realm", "OicSecurityRealm" in str(data.get("realm")), str(data.get("realm")))
     check("root URL from request off", data.get("rootURLFromRequest") is False, str(data.get("rootURLFromRequest")))
+    check("OIDC id strategies set", data.get("missingIdStrategy") is False, str(data.get("missingIdStrategy")))
+    check("OIDC user case-insensitive", "CaseInsensitive" in str(data.get("userIdStrategy")), str(data.get("userIdStrategy")))
+    check("OIDC group case-insensitive", "CaseInsensitive" in str(data.get("groupIdStrategy")), str(data.get("groupIdStrategy")))
     check("Role Strategy", "RoleBasedAuthorizationStrategy" in str(data.get("authorization")), str(data.get("authorization")))
+    check("Role-based project naming", "RoleBasedProjectNamingStrategy" in str(data.get("projectNamingStrategy")), str(data.get("projectNamingStrategy")))
     check("signup closed", data.get("allowsSignup") is False, str(data.get("allowsSignup")))
     signup = http_code(f"{JENKINS_URL}/signup")
     check("https /signup is 404", signup == 404, str(signup))

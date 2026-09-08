@@ -5,7 +5,7 @@ Production-деплой Jenkins на **Selectel Box2** (`89.248.193.83`, `ssh bo
 | На сервере | Значение |
 |------------|----------|
 | URL | https://jenkins.qa.guru |
-| Controller | `jenkins/jenkins:jdk21`, порт **8082** → UI |
+| Controller | `jenkins/jenkins:2.580-jdk21`, порт **8082** → UI |
 | Agent port | **50000** |
 | Compose | `/var/docker-compose-config/docker-compose.yml` |
 | JENKINS_HOME | `/var/jenkins_home` (не трогаем при деплое) |
