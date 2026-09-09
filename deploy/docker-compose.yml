@@ -7,7 +7,7 @@ networks:
 services:
   jenkins:
     container_name: jenkins
-    image: ${JENKINS_IMAGE:-jenkins/jenkins:2.580-jdk21}
+    image: ${JENKINS_IMAGE:-jenkins/jenkins:2.581-jdk21}
     privileged: true
     user: root
     environment:

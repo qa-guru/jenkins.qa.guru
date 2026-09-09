@@ -20,14 +20,14 @@ Jenkins controller + inbound agents через Docker Compose на prod-хост
 
 | Сервис | Образ | Порты |
 |--------|-------|-------|
-| jenkins | `jenkins/jenkins:2.580-jdk21` | **`127.0.0.1:8082`→8080**, **`127.0.0.1:50000`** (не `0.0.0.0`) |
+| jenkins | `jenkins/jenkins:2.581-jdk21` | **`127.0.0.1:8082`→8080**, **`127.0.0.1:50000`** (не `0.0.0.0`) |
 | java-jdk21-jenkins-agent-{1..5} | `java-jdk21-jenkins-agent-ext` (Node **26.7.0** for A3 CLI) | internal |
 | python-python314-jenkins-agent-{1..5} | `python-python314-jenkins-agent-ext` (Node **26.7.0** musl) | internal |
 | js-node24-jenkins-agent-{1..5} | `js-node24-jenkins-agent-ext` (Node **26.7.0**, label stays `js-node24`) | internal |
 
 Nginx: `/etc/nginx/sites-available/jenkins` → `127.0.0.1:8082`.
 
-**Security canon (P4 2026-09-05):** `oic-auth` + Role Strategy (`/staff` `/mentors` `/students`). `/signup` 404. Break-glass — `escapeHatch` user `admin`. OIDC username/group **CaseInsensitive** (explicit, matches Keycloak). Project naming — **Role-based** (`forceExistingJobs=false`). Controller pin **`jenkins/jenkins:2.580-jdk21`** (host `/var/docker-compose-config/.env`). Re-apply: `python3 deploy/oidc.py verify`. **Do not** run `../dev/scripts/harden-jenkins-security.sh` — it rewinds to HudsonPrivate.
+**Security canon (P4 2026-09-05):** `oic-auth` + Role Strategy (`/staff` `/mentors` `/students`). `/signup` 404. Break-glass — `escapeHatch` user `admin`. OIDC username/group **CaseInsensitive** (explicit, matches Keycloak). Project naming — **Role-based** (`forceExistingJobs=false`). Controller pin **`jenkins/jenkins:2.581-jdk21`** (host `/var/docker-compose-config/.env`; weekly 2.581 cosmetics 2026-09-10, not security). Re-apply: `python3 deploy/oidc.py verify`. **Do not** run `../dev/scripts/harden-jenkins-security.sh` — it rewinds to HudsonPrivate.
 
 **Security canon (2026-08-10, superseded):** matrix `Hudson.Administer` только у `admin`; публичный HTTP только nginx → `127.0.0.1:8082`.
 

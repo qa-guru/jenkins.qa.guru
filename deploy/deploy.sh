@@ -33,7 +33,7 @@ install -m 755 "${SCRIPT_DIR}/sync-nginx.sh" "${CONFIG_DIR}/bin/sync-nginx.sh"
 echo "=== pull Jenkins controller image ==="
 # shellcheck disable=SC1090
 set -a && source "${ENV_FILE}" && set +a
-docker pull "${JENKINS_IMAGE:-jenkins/jenkins:2.580-jdk21}"
+docker pull "${JENKINS_IMAGE:-jenkins/jenkins:2.581-jdk21}"
 
 echo "=== build agent images ==="
 cd "${CONFIG_DIR}"
