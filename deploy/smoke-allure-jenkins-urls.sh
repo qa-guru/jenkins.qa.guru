@@ -2,24 +2,21 @@
 # Allure report URL contract on jenkins.qa.guru (ADR 010).
 #
 # Contract: every published link ends with index.html.
-#   single A3 → <build>/allure/awesome|dashboard/index.html
-#   dual A3   → <build>/allure3/awesome|dashboard/index.html
-#   single A2 → <build>/allure/index.html
-#   dual A2   → <build>/allure2/index.html
-# Directory URLs (…/awesome/) must 301 to index.html — nginx defense-in-depth for
-# in-report navigation; allure-jenkins-plugin itself answers 500 there.
+#   A3 → <build>/allure/awesome|dashboard/index.html
+#   A2 → <build>/allure/index.html
+# One job = one report (official plugin urlName is always /allure).
+# Directory URLs (…/awesome/) must 301 to index.html — nginx defense-in-depth.
 set -euo pipefail
 
 BASE_URL="${1:-${JENKINS_PUBLIC_URL:-https://jenkins.qa.guru}}"
 BASE_URL="${BASE_URL%/}"
 
-# job:url-slug  — slug is Jenkins action URL (/allure classic, /allure3 dual-only)
+# job:url-slug  — slug is Jenkins action URL (/allure)
 ALLURE3_JOBS=(
   autotests-ai-multistack-tests-freestyle-java-allure3:allure
   autotests-ai-multistack-tests-freestyle-java-allure3-full-attachments:allure
   autotests-ai-multistack-tests-freestyle-js-allure3:allure
   autotests-ai-multistack-tests-freestyle-python-allure3:allure
-  autotests-ai-multistack-tests-freestyle-java-allure2-allure3:allure3
 )
 
 # job:report-url-slug:permalink[:trend]  — trend=no skips the job-level URL.
@@ -27,7 +24,6 @@ ALLURE2_JOBS=(
   autotests-ai-multistack-tests-freestyle-java-allure2:allure:lastSuccessfulBuild:trend
   autotests-ai-multistack-tests-freestyle-js-allure2:allure:lastSuccessfulBuild:trend
   autotests-ai-multistack-tests-freestyle-python-allure2:allure:lastSuccessfulBuild:trend
-  autotests-ai-multistack-tests-freestyle-java-allure2-allure3:allure2:lastSuccessfulBuild:trend
   # Student job: suite is red and the last green build predates report archiving —
   # only the link contract of the latest build is asserted.
   41_MashaSelyanko_proect1:allure:lastCompletedBuild:no-trend
