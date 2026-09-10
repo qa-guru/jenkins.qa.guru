@@ -721,8 +721,10 @@ mentorPerms.add(Item.READ)
 mentorPerms.add(Item.DISCOVER)
 mentorPerms.add(Item.WORKSPACE)
 mentorPerms.add(Item.BUILD)
+mentorPerms.add(Item.CANCEL)
+mentorPerms.add(Item.CREATE)
 mentorPerms.add(View.READ)
-Role mentorRole = new Role("mentor", Pattern.compile(".*"), mentorPerms, "Keycloak /mentors")
+Role mentorRole = new Role("mentor", Pattern.compile(".*"), mentorPerms, "Keycloak /mentors: homework check")
 
 Set studentGlobal = new HashSet()
 studentGlobal.add(Jenkins.READ)
@@ -773,6 +775,7 @@ itemMap.assignRole(etalonRole, new PermissionEntry(AuthorizationType.USER, "anon
 itemMap.assignRole(etalonRole, new PermissionEntry(AuthorizationType.GROUP, "/students"))
 itemMap.assignRole(etalonRole, new PermissionEntry(AuthorizationType.GROUP, "/mentors"))
 itemMap.assignRole(studentWorkRole, new PermissionEntry(AuthorizationType.GROUP, "/students"))
+itemMap.assignRole(studentWorkRole, new PermissionEntry(AuthorizationType.GROUP, "/mentors"))
 
 [{token_literal}].each {{ sid ->
   if (sid && sid != "admin") {{
