@@ -50,7 +50,39 @@ INV_DIR = Path.home() / ".config/jenkins/p4-inventory"
 PASSWORDS_FILE = INV_DIR / "kc-passwords.env"
 QA_GURU_DIR = Path.home() / ".config/qa-guru"
 WELL_KNOWN = f"{AUTH_URL}/realms/{REALM}/.well-known/openid-configuration"
-ETALON_PATTERN = r"(autotests-ai-multistack-tests.*|41_MashaSelyanko_proect1)"
+# Public demo + GetCourse school jobs. Keep in sync with apply-jenkins-school.sh
+# etalon patch. oidc.py configure must not drop school names — anonymous
+# ExtendedRead /configure is a lesson URL.
+SCHOOL_ETALON_JOBS = (
+    "simple_tests",
+    "simple_tests_with_github_project",
+    "simple_assert_tests",
+    "simple_assert_tests_with_allure",
+    "ui_tests",
+    "ui_tests_with_pageobject",
+    "ui_tests_with_attachments",
+    "java_appium",
+    "properties_no_tests",
+    "properties_simple_tests",
+    "python_simple_tests",
+    "python_simple_tests_with_github_project",
+    "python_simple_assert_tests",
+    "python_simple_assert_tests_with_allure",
+    "python_ui_tests",
+    "python_ui_tests_with_pageobject",
+    "python_ui_tests_with_attachments",
+    "python_appium",
+    "python_properties_no_test",
+    "python_properties_simple_tests",
+    "python_mobile_tests",
+    "mobile_tests",
+    "homework_qa_guru_jenkins_ui",
+)
+ETALON_PATTERN = (
+    r"(autotests-ai-multistack-tests.*|41_MashaSelyanko_proect1|"
+    + "|".join(SCHOOL_ETALON_JOBS)
+    + ")"
+)
 STUDENT_PATTERN = r"(?!autotests-ai-multistack-tests)(?!41_MashaSelyanko_proect1).*"
 
 STAFF = {"svasenkov"}
@@ -755,6 +787,8 @@ etalonPerms.add(Item.WORKSPACE)
 if (Item.EXTENDED_READ.getEnabled()) {{
   etalonPerms.add(Item.EXTENDED_READ)
 }}
+// Keep init.groovy.d/zz-extended-read-configfiles-nologin.groovy (JENKINS-75999).
+// ExtendedRead without that filter Keycloak-redirects /configure. Do not delete.
 Role etalonRole = new Role("etalon", Pattern.compile("{ETALON_PATTERN}"), etalonPerms, "demo jobs, public read")
 
 Set studentWork = new HashSet()
@@ -965,6 +999,57 @@ def http_code(url: str) -> int:
         return exc.code
     except (urllib.error.URLError, TimeoutError, OSError):
         return 0
+
+
+def anonymous_school_configure() -> tuple[bool, str]:
+    """GET /configure plus fillFileIdItems must not serve OIDC login HTML."""
+    job = "java_appium"
+    jar = CookieJar()
+    opener = urllib.request.build_opener(
+        urllib.request.HTTPSHandler(context=ssl_ctx()),
+        urllib.request.HTTPCookieProcessor(jar),
+    )
+    cfg = f"{JENKINS_URL}/job/{job}/configure"
+    try:
+        with opener.open(urllib.request.Request(cfg), timeout=25) as resp:
+            html = resp.read().decode("utf-8", "replace")
+            status = resp.status
+    except urllib.error.HTTPError as exc:
+        return False, f"configure HTTP {exc.code}"
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        return False, f"configure {type(exc).__name__}"
+    if status != 200:
+        return False, f"configure HTTP {status}"
+    if "redirect.js" in html or "data-redirect-url" in html:
+        return False, "configure HTML login-redirect"
+    crumb = re.search(r'data-crumb-value="([^"]+)"', html)
+    header = re.search(r'data-crumb-header="([^"]+)"', html)
+    if not crumb:
+        return False, "no crumb"
+    fill = (
+        f"{JENKINS_URL}/job/{job}/descriptorByName/"
+        "org.jenkinsci.plugins.configfiles.buildwrapper.ManagedFile/fillFileIdItems"
+    )
+    req = urllib.request.Request(
+        fill,
+        data=b"",
+        method="POST",
+        headers={header.group(1) if header else "Jenkins-Crumb": crumb.group(1)},
+    )
+    try:
+        with opener.open(req, timeout=25) as resp:
+            body = resp.read().decode("utf-8", "replace")
+            fstatus = resp.status
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", "replace")
+        fstatus = exc.code
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        return False, f"fillFileIdItems {type(exc).__name__}"
+    if fstatus != 200:
+        return False, f"fillFileIdItems HTTP {fstatus}"
+    if "commenceLogin" in body or "redirect.js" in body or "auth.qa.guru" in body:
+        return False, "fillFileIdItems login bounce"
+    return True, job
 
 
 def oidc_login(username: str, password: str) -> dict[str, Any]:
@@ -1184,6 +1269,15 @@ def cmd_verify() -> int:
     check("user count did not drop", now >= before_n, f"{before_n} -> {now}")
     script = http_code(f"{JENKINS_URL}/computer/(built-in)/script")
     check("anon script console 403", script == 403, str(script))
+    nologin = jenkins_groovy(
+        "import hudson.ExtensionList\n"
+        "import jenkins.util.HttpServletFilter\n"
+        "def hit = ExtensionList.lookup(HttpServletFilter).any { it.toString().contains('zds-extended-read') }\n"
+        "println(hit ? 'yes' : 'no')\n"
+    ).strip()
+    check("extended-read no-login filter", nologin == "yes", nologin)
+    cfg_ok, cfg_detail = anonymous_school_configure()
+    check("anon school /configure no Keycloak bounce", cfg_ok, cfg_detail)
     width = max(len(n) for n, _, _ in checks)
     for name, ok, detail in checks:
         print(f"{'ok  ' if ok else 'FAIL'}  {name.ljust(width)}  {detail}".rstrip())
