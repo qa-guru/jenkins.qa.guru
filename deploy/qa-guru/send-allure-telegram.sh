@@ -16,6 +16,12 @@
 #   /opt/qa-guru/bin/send-allure-telegram.sh allure3 [notifications/config.json]
 set -euo pipefail
 
+# SOCKS5 creds for config.proxy: the CLI resolves them from process env only
+# (MICROSOCKS_USER/MICROSOCKS_PASS); the jar reads this file itself. Export for both.
+if [[ -f /opt/qa-guru/etc/microsocks.env ]]; then
+  set -a; . /opt/qa-guru/etc/microsocks.env; set +a
+fi
+
 REPORT="${1:-}"
 CONFIG="${2:-notifications/config.json}"
 VERSION_FILE="${ALLURE_NOTIFICATIONS_VERSION_FILE:-/opt/qa-guru/etc/allure-notifications.version}"
