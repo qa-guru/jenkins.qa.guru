@@ -1141,7 +1141,7 @@ def escape_hatch_login(username: str, password: str) -> dict[str, Any]:
                 return fetch(_join(url, loc), None)
             return url, body, exc.code
 
-    url, page, status = fetch(f"{JENKINS_URL}/login")
+    url, page, status = fetch(f"{JENKINS_URL}/login?escapeHatch=true")
     forms = parse_forms(page)
     hatch = next((f for f in forms if "j_username" in f["inputs"] or "escapeHatch" in f.get("action", "")), None)
     if not hatch:
